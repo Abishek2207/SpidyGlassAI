@@ -15,6 +15,8 @@ from app.core.logging import configure_logging
 from app.core.exceptions import register_exception_handlers
 from app.api.router import api_router
 from app.modules.device.router import router as ws_router
+from app.modules.agent.router import router as agent_router
+from app.api.cron import router as cron_router
 
 # Configure structured logging first
 configure_logging()

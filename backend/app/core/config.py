@@ -18,7 +18,11 @@ class Settings(BaseSettings):
 
     # ── App ──────────────────────────────────────────────────────────────────
     app_name: str = "SpiderGlass AI"
-    app_env: str = "development"
+    ENVIRONMENT: str = "development"
+    SARVAM_API_KEY: str = ""
+    CRON_SECRET: str = "spiderglass-local-cron"
+    
+    # DB Configuration: int = 8000
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     debug: bool = True

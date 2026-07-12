@@ -39,10 +39,23 @@ export const RightPanel = ({ telemetry }: { telemetry: TelemetryPayload | null }
       </div>
 
       {/* Agents Mesh Status */}
-      <div className="glass-panel rounded-3xl p-5 flex-1 border border-white/5">
-        <h3 className="text-sm font-semibold tracking-widest text-neutral-400 uppercase mb-4 flex items-center gap-2">
-          <Cpu className="w-4 h-4" /> Agent Mesh
-        </h3>
+      <div className="glass-panel rounded-3xl p-5 flex-1 border border-white/5 relative">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-sm font-semibold tracking-widest text-neutral-400 uppercase flex items-center gap-2">
+            <Cpu className="w-4 h-4" /> Agent Mesh
+          </h3>
+          <button 
+            onClick={() => {
+              fetch('http://localhost:8000/api/cron/cleanup', { 
+                method: 'POST', 
+                headers: { 'Authorization': 'Bearer spiderglass-local-cron' }
+              }).then(res => res.json()).then(data => alert(data.message)).catch(e => console.error(e));
+            }}
+            className="text-[10px] uppercase font-bold tracking-widest text-red-400 bg-red-400/10 hover:bg-red-400/20 px-3 py-1 rounded-full transition-colors border border-red-500/20"
+          >
+            Clear Cache
+          </button>
+        </div>
         
         <div className="flex flex-col gap-3">
           {Object.entries(agents).map(([name, data]) => (
