@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Cpu, Activity, Zap, Database } from 'lucide-react';
+import { Cpu, Activity, Database } from 'lucide-react';
 import type { TelemetryPayload } from '../types';
 
 export const RightPanel = ({ telemetry }: { telemetry: TelemetryPayload | null }) => {

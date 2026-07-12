@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { VideoOff, Fingerprint } from 'lucide-react';
 import type { FrameResult } from '../types';
