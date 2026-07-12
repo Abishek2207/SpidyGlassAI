@@ -1,0 +1,13 @@
+# Node
+node_modules/
+dist/
+.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+spiderglass.db
+
+# System
+.DS_Store
