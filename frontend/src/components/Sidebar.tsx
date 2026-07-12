@@ -33,7 +33,7 @@ export const Sidebar = ({ wsConnected = false }: SidebarProps) => {
       </div>
 
       <div className="flex-1 flex flex-col gap-2">
-        {items.map((item, idx) => {
+        {items.map((item) => {
           const Icon = item.icon;
           return (
             <motion.button
