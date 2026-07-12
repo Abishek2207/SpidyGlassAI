@@ -46,7 +46,8 @@ export const RightPanel = ({ telemetry }: { telemetry: TelemetryPayload | null }
           </h3>
           <button 
             onClick={() => {
-              fetch('http://localhost:8000/api/cron/cleanup', { 
+              const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+              fetch(`${backendUrl}/api/cron/cleanup`, { 
                 method: 'POST', 
                 headers: { 'Authorization': 'Bearer spiderglass-local-cron' }
               }).then(res => res.json()).then(data => alert(data.message)).catch(e => console.error(e));

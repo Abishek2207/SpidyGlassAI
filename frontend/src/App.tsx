@@ -30,7 +30,8 @@ function App() {
 
   useEffect(() => {
     const connect = () => {
-      ws.current = new WebSocket('ws://localhost:8000/ws');
+      const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
+      ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
         console.log('[SpiderGlass] Neural link established');
