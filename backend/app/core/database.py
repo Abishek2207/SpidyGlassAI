@@ -9,16 +9,16 @@ from sqlalchemy.orm import DeclarativeBase
 
 def _make_engine():
     """Build the engine lazily so it picks up the .env DATABASE_URL correctly."""
-    # Import here to ensure .env is already loaded
+    import os
     from app.core.config import settings
-    url = settings.database_url
 
-    # Fallback to SQLite if postgres not set or clearly a template value
-    if not url or "postgresql" in url:
-        # Check if we actually want sqlite for local dev
-        import os
-        if os.environ.get("USE_SQLITE", "true").lower() == "true" and "localhost" in url:
-            url = "sqlite+aiosqlite:///./spiderglass_dev.db"
+    url = settings.database_url
+    environment = settings.ENVIRONMENT
+
+    # In production (Render), use DATABASE_URL as-is — must be a real PostgreSQL URL.
+    # In development (local), fall back to SQLite if the URL still points to localhost.
+    if environment != "production" and ("localhost" in url or "127.0.0.1" in url):
+        url = "sqlite+aiosqlite:///./spiderglass_dev.db"
 
     connect_args = {"check_same_thread": False} if "sqlite" in url else {}
     return create_async_engine(
