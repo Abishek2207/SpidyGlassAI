@@ -26,7 +26,7 @@ logger = logging.getLogger("spiderglass")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown events."""
-    logger.info(f"Starting {settings.app_name} [{settings.app_env}]")
+    logger.info(f"Starting {settings.app_name} [{settings.ENVIRONMENT}]")
 
     # Initialise PostgreSQL tables
     await init_db()
