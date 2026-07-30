@@ -15,9 +15,9 @@ def _make_engine():
     url = settings.database_url
     environment = settings.ENVIRONMENT
 
-    # In production (Render), use DATABASE_URL as-is — must be a real PostgreSQL URL.
-    # In development (local), fall back to SQLite if the URL still points to localhost.
-    if environment != "production" and ("localhost" in url or "127.0.0.1" in url):
+    # In production (Render), if the user hasn't supplied a real PostgreSQL DATABASE_URL,
+    # it will default to localhost. We must fallback to SQLite so the app doesn't crash.
+    if "localhost" in url or "127.0.0.1" in url:
         url = "sqlite+aiosqlite:///./spiderglass_dev.db"
 
     connect_args = {"check_same_thread": False} if "sqlite" in url else {}
