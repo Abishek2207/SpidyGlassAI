@@ -4,11 +4,13 @@ import clsx from 'clsx';
 
 interface SidebarProps {
   wsConnected?: boolean;
+  micActive?: boolean;
+  onMicToggle?: () => void;
   onSettingsClick?: () => void;
   onAnalyticsClick?: () => void;
 }
 
-export const Sidebar = ({ wsConnected = false, onSettingsClick, onAnalyticsClick }: SidebarProps) => {
+export const Sidebar = ({ wsConnected = false, micActive = false, onMicToggle, onSettingsClick, onAnalyticsClick }: SidebarProps) => {
   const items = [
     { icon: LayoutDashboard, label: 'Dashboard', active: true },
     { icon: Video, label: 'Vision Processing', active: false },

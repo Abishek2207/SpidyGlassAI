@@ -1,14 +1,16 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Globe2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, Globe2, Sparkles, CheckCircle2, Mic, MicOff } from 'lucide-react';
 
 interface BottomPanelProps {
   transcript?: string;
   translatedText?: string;
   aiReply?: string;
   pipelineStages?: string[];
+  micActive?: boolean;
+  onMicToggle?: () => void;
 }
 
-export const BottomPanel = ({ transcript, translatedText, aiReply, pipelineStages }: BottomPanelProps) => {
+export const BottomPanel = ({ transcript, translatedText, aiReply, pipelineStages, micActive, onMicToggle }: BottomPanelProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-48 mt-6">
 
@@ -20,8 +22,19 @@ export const BottomPanel = ({ transcript, translatedText, aiReply, pipelineStage
         className="glass-panel rounded-3xl p-5 flex flex-col relative overflow-hidden group"
       >
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-700"></div>
-        <h3 className="text-xs font-mono text-cyan-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
-          <MessageSquare className="w-4 h-4" /> Live Transcript (STT)
+        <h3 className="text-xs font-mono text-cyan-400 mb-3 flex items-center justify-between uppercase tracking-widest">
+          <span className="flex items-center gap-2"><MessageSquare className="w-4 h-4" /> Live Transcript (STT)</span>
+          <button
+            onClick={onMicToggle}
+            className={`p-1.5 rounded-full transition-all ${
+              micActive
+                ? 'bg-red-500/20 text-red-400 animate-pulse'
+                : 'bg-white/10 text-neutral-400 hover:text-white'
+            }`}
+            title={micActive ? 'Stop mic' : 'Start mic'}
+          >
+            {micActive ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+          </button>
         </h3>
         <AnimatePresence mode="wait">
           <motion.p

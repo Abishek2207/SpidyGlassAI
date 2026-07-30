@@ -32,6 +32,9 @@ function App() {
 
   const ws = useRef<WebSocket | null>(null);
   const pingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [micActive, setMicActive] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState<string>('');
 
   useEffect(() => {
 
@@ -104,6 +107,51 @@ function App() {
     };
   }, []);
 
+  const toggleMic = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || (window as unknown as { webkitSpeechRecognition: typeof window.SpeechRecognition }).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn('Speech Recognition not supported in this browser.');
+      return;
+    }
+
+    if (micActive) {
+      recognitionRef.current?.stop();
+      setMicActive(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interim = '';
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+      setLiveTranscript(interim || final);
+      if (final.trim()) {
+        // Send finalized transcript to backend for translation + AI
+        if (ws.current?.readyState === WebSocket.OPEN) {
+          ws.current.send(JSON.stringify({ type: 'text_message', data: final.trim() }));
+        }
+      }
+    };
+
+    recognition.onerror = () => setMicActive(false);
+    recognition.onend = () => { if (micActive) recognition.start(); };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setMicActive(true);
+  }, [micActive]);
+
   const sendFrameToBackend = useCallback((base64Img: string) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({ type: 'frame', data: base64Img }));
@@ -122,6 +170,8 @@ function App() {
       {/* Main Layout */}
       <Sidebar 
         wsConnected={wsConnected} 
+        micActive={micActive}
+        onMicToggle={toggleMic}
         onSettingsClick={() => setIsSettingsOpen(true)}
         onAnalyticsClick={() => setIsAnalyticsOpen(true)}
       />
@@ -143,10 +193,12 @@ function App() {
 
         {/* Bottom Panel (Audio/Context/Translation) */}
         <BottomPanel
-          transcript={agentResponse?.transcript}
+          transcript={liveTranscript || agentResponse?.transcript}
           translatedText={agentResponse?.translated_text}
           aiReply={agentResponse?.ai_reply}
           pipelineStages={agentResponse?.pipeline_stages}
+          micActive={micActive}
+          onMicToggle={toggleMic}
         />
 
       </div>
