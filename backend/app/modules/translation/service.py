@@ -17,13 +17,7 @@ class TranslationService:
         start = time.time()
 
         if not settings.sarvam_api_key or settings.sarvam_api_key == "your-sarvam-api-key-here":
-            logger.warning("Sarvam API key not set – returning mock translation.")
-            return TranslationResponse(
-                translated_text=f"[Mock Translation of: {req.input[:50]}]",
-                source_language_code=req.source_language_code,
-                target_language_code=req.target_language_code,
-                processing_time_ms=int((time.time() - start) * 1000),
-            )
+            raise SarvamAPIException("SARVAM_API_KEY is missing. Please configure your Sarvam API key to enable real Translations.")
 
         payload = {
             "input": req.input,

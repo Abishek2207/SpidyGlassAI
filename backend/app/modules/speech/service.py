@@ -21,13 +21,7 @@ class SpeechService:
         start = time.time()
 
         if not settings.sarvam_api_key or settings.sarvam_api_key == "your-sarvam-api-key-here":
-            logger.warning("Sarvam API key not set – returning mock transcript.")
-            return SpeechTranscribeResponse(
-                transcript="[Mock] Hello, this is a test transcript in Indian language.",
-                language_code=req.language_code,
-                confidence=0.95,
-                processing_time_ms=int((time.time() - start) * 1000),
-            )
+            raise SarvamAPIException("SARVAM_API_KEY is missing. Please configure your Sarvam API key to enable real Speech-to-Text.")
 
         try:
             audio_bytes = base64.b64decode(req.audio_base64)
