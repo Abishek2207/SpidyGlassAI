@@ -12,6 +12,9 @@ export const LoginOverlay = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const API_URL = `${BASE_URL}/api/v1`;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -20,7 +23,7 @@ export const LoginOverlay = () => {
     try {
       if (isLogin) {
         // Login
-        const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+        const response = await fetch(`${API_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
@@ -34,7 +37,7 @@ export const LoginOverlay = () => {
         setToken(data.access_token);
         
         // Fetch user data
-        const userResponse = await fetch('http://localhost:8000/api/v1/auth/me', {
+        const userResponse = await fetch(`${API_URL}/auth/me`, {
           headers: { 'Authorization': `Bearer ${data.access_token}` },
         });
         if (userResponse.ok) {
@@ -44,7 +47,7 @@ export const LoginOverlay = () => {
 
       } else {
         // Register
-        const response = await fetch('http://localhost:8000/api/v1/auth/register', {
+        const response = await fetch(`${API_URL}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, username, password }),

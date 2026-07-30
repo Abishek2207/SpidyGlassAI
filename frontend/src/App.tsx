@@ -40,7 +40,9 @@ function App() {
     if (!token) return;
 
     const connect = () => {
-      const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const wsProtocol = backendUrl.startsWith('https') ? 'wss' : 'ws';
+      const wsUrl = `${backendUrl.replace(/^https?:\/\//, `${wsProtocol}://`)}/ws`;
       ws.current = new WebSocket(`${wsUrl}?token=${token}`);
 
       ws.current.onopen = () => {
