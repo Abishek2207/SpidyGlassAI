@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.config import settings
 from app.modules.logs.service import LogsService
@@ -9,7 +9,7 @@ router = APIRouter()
 @router.post("/cleanup")
 async def cleanup_old_logs(
     authorization: str = Header(None),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Cron endpoint to delete logs older than 7 days.
@@ -24,7 +24,7 @@ async def cleanup_old_logs(
             detail="Invalid CRON_SECRET"
         )
     
-    deleted_count = LogsService.cleanup_old_logs(db, days=7)
+    deleted_count = await LogsService.cleanup_old_logs(db, days=7)
     
     return {
         "status": "success",

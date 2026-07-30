@@ -8,7 +8,7 @@ from app.modules.logs.models import ConversationHistory, GestureLog, SpeechLog, 
 
 class LogsService:
     @staticmethod
-    def cleanup_old_logs(db: Session, days: int = 7) -> int:
+    async def cleanup_old_logs(db: AsyncSession, days: int = 7) -> int:
         from datetime import datetime, timedelta
         from sqlalchemy import delete
         
@@ -16,11 +16,14 @@ class LogsService:
         
         # Delete old GestureLogs and SpeechLogs to save DB space
         # We keep ConversationHistory as long-term memory
-        g_del = db.query(GestureLog).filter(GestureLog.created_at < cutoff_date).delete()
-        s_del = db.query(SpeechLog).filter(SpeechLog.created_at < cutoff_date).delete()
+        g_stmt = delete(GestureLog).where(GestureLog.created_at < cutoff_date)
+        s_stmt = delete(SpeechLog).where(SpeechLog.created_at < cutoff_date)
         
-        db.commit()
-        return g_del + s_del
+        g_res = await db.execute(g_stmt)
+        s_res = await db.execute(s_stmt)
+        
+        await db.commit()
+        return g_res.rowcount + s_res.rowcount
 
     @staticmethod
     async def log_conversation(
