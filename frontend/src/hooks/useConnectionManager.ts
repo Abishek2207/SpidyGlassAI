@@ -21,6 +21,7 @@ export const useConnectionManager = (
   const ws = useRef<WebSocket | null>(null);
   const healthPollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   let isDestroyed = false;
 
   const connectWs = useCallback(() => {
@@ -32,6 +33,13 @@ export const useConnectionManager = (
       ws.current.onopen = () => {
         if (isDestroyed) { ws.current?.close(); return; }
         setConnectionState(prev => ({ ...prev, status: 'connected', wsConnected: true, lastPing: Date.now() }));
+        
+        if (pingInterval.current) clearInterval(pingInterval.current);
+        pingInterval.current = setInterval(() => {
+          if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 5000);
       };
 
       ws.current.onmessage = (event) => {
@@ -47,6 +55,8 @@ export const useConnectionManager = (
       ws.current.onclose = () => {
         if (isDestroyed) return;
         setConnectionState(prev => ({ ...prev, status: 'reconnecting', wsConnected: false }));
+        if (pingInterval.current) clearInterval(pingInterval.current);
+        
         // Try to reconnect in 2 seconds
         if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
         reconnectTimeout.current = setTimeout(connectWs, 2000);
@@ -89,6 +99,7 @@ export const useConnectionManager = (
       isDestroyed = true;
       if (healthPollInterval.current) clearInterval(healthPollInterval.current);
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+      if (pingInterval.current) clearInterval(pingInterval.current);
       ws.current?.close();
     };
   }, [connectWs, checkHealth]);

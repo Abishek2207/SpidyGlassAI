@@ -84,12 +84,13 @@ app.include_router(ws_router)
 
 # ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
-async def health_check():
+async def health_check(demoMode: str = "true"):
     return {
         "status": "online",
-        "version": "1.0.0",
-        "uptime": str(datetime.timedelta(seconds=int(time.time() - psutil.boot_time()))),
-        "database": "connected"
+        "backend": "connected",
+        "database": "connected",
+        "websocket": "running",
+        "demo_mode": demoMode.lower() == "true"
     }
 
 @app.get("/", tags=["Health"])
