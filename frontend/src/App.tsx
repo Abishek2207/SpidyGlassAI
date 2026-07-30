@@ -5,10 +5,8 @@ import { CenterDashboard } from './components/CenterDashboard';
 import { RightPanel } from './components/RightPanel';
 import { BottomPanel } from './components/BottomPanel';
 import { ParticleBackground } from './components/ParticleBackground';
-import { LoginOverlay } from './components/LoginOverlay';
 import { SettingsModal } from './components/SettingsModal';
 import { AnalyticsOverlay } from './components/AnalyticsOverlay';
-import { useAuthStore } from './store/authStore';
 import type { TelemetryPayload, FrameResult } from './types';
 export interface AgentResponse {
   transcript?: string;
@@ -22,7 +20,6 @@ export interface AgentResponse {
 }
 
 function App() {
-  const { token } = useAuthStore();
   const [telemetry, setTelemetry] = useState<TelemetryPayload | null>(null);
   const [frameResult, setFrameResult] = useState<FrameResult | null>(null);
   const [agentResponse, setAgentResponse] = useState<AgentResponse | null>(null);
@@ -37,7 +34,6 @@ function App() {
   const pingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!token) return;
 
     const connect = () => {
       const backendUrl = import.meta.env.VITE_API_URL || 'https://spidyglassai.onrender.com';
@@ -106,7 +102,7 @@ function App() {
       if (pingInterval.current) clearInterval(pingInterval.current);
       ws.current?.close();
     };
-  }, [token]);
+  }, []);
 
   const sendFrameToBackend = useCallback((base64Img: string) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -114,14 +110,6 @@ function App() {
     }
   }, []);
 
-  if (!token) {
-    return (
-      <div className="h-screen w-full bg-[#050505] text-white p-4 lg:p-6 overflow-hidden flex gap-6">
-        <ParticleBackground />
-        <LoginOverlay />
-      </div>
-    );
-  }
 
   return (
     <div className="h-screen w-full bg-[#050505] text-white p-4 lg:p-6 overflow-hidden flex gap-6">
