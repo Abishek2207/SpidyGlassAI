@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: spiderglass-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+
+  - type: web
+    name: spiderglass-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: spiderglass-backend
+          envVarKey: RENDER_EXTERNAL_URL

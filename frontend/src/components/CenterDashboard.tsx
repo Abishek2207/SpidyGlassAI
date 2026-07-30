@@ -86,11 +86,50 @@ export const CenterDashboard = ({ cameraActive, frameResult, onToggleCamera, sen
         
         {cameraActive ? (
           frameResult?.image ? (
-            <img 
-              src={frameResult.image} 
-              alt="AI Vision Feed" 
-              className="w-full h-full object-cover relative z-10"
-            />
+            <div className="w-full h-full relative z-10">
+              <img 
+                src={frameResult.image} 
+                alt="AI Vision Feed" 
+                className="w-full h-full object-cover"
+              />
+              {/* Bounding boxes */}
+              {frameResult.objects?.map((obj, i) => (
+                <div 
+                  key={`obj-${i}`} 
+                  className="absolute border-2 border-yellow-400/80 bg-yellow-400/10 pointer-events-none shadow-[0_0_15px_rgba(250,204,21,0.3)]"
+                  style={{
+                    left: `${obj.bbox[0] * 100}%`,
+                    top: `${obj.bbox[1] * 100}%`,
+                    width: `${(obj.bbox[2] - obj.bbox[0]) * 100}%`,
+                    height: `${(obj.bbox[3] - obj.bbox[1]) * 100}%`
+                  }}
+                >
+                  <span className="absolute -top-6 left-[-2px] bg-yellow-400/90 text-black text-[10px] font-mono font-bold px-2 py-0.5 tracking-wider backdrop-blur-sm">
+                    {obj.label.toUpperCase()} {Math.round(obj.confidence * 100)}%
+                  </span>
+                </div>
+              ))}
+              {frameResult.faces?.map((face, i) => (
+                <div 
+                  key={`face-${i}`} 
+                  className="absolute border-2 border-fuchsia-500/80 bg-fuchsia-500/10 pointer-events-none flex items-center justify-center shadow-[0_0_15px_rgba(217,70,239,0.3)]"
+                  style={{
+                    left: `${face.bbox[0] * 100}%`,
+                    top: `${face.bbox[1] * 100}%`,
+                    width: `${(face.bbox[2] - face.bbox[0]) * 100}%`,
+                    height: `${(face.bbox[3] - face.bbox[1]) * 100}%`
+                  }}
+                >
+                   <span className="absolute -top-6 left-[-2px] bg-fuchsia-500/90 text-white text-[10px] font-mono font-bold px-2 py-0.5 tracking-wider backdrop-blur-sm">
+                    FACE {Math.round(face.confidence * 100)}%
+                  </span>
+                  <div className="w-6 h-6 border-t border-l border-fuchsia-500/50 absolute top-2 left-2"></div>
+                  <div className="w-6 h-6 border-t border-r border-fuchsia-500/50 absolute top-2 right-2"></div>
+                  <div className="w-6 h-6 border-b border-l border-fuchsia-500/50 absolute bottom-2 left-2"></div>
+                  <div className="w-6 h-6 border-b border-r border-fuchsia-500/50 absolute bottom-2 right-2"></div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="relative z-10 flex flex-col items-center gap-4 text-cyan-400">
               <div className="w-12 h-12 border-[3px] border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div>

@@ -149,7 +149,7 @@ async def handle_connection(client_id: str, ws: WebSocket):
                     # For this laptop wrapper, we'll immediately read and process it here.
                     frame_data = await manager.camera_providers[client_id].read_frame()
                     
-                    cam_result = await _vision_svc.process_frame(frame_data)
+                    cam_result = await _camera_svc.process_frame(CameraFrameRequest(image_base64=frame_data))
                     
                     gesture_results = []
                     if cam_result.hands_detected:
@@ -187,6 +187,8 @@ async def handle_connection(client_id: str, ws: WebSocket):
                         "data": {
                             "image": cam_result.annotated_image_base64,
                             "hands_detected": cam_result.hands_detected,
+                            "objects": [o.model_dump() for o in cam_result.objects],
+                            "faces": [f.model_dump() for f in cam_result.faces],
                             "gestures": gesture_results,
                             "sentence": current_sentence if 'current_sentence' in locals() else "",
                             "process_time_ms": cam_result.processing_time_ms,

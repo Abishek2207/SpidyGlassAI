@@ -4,17 +4,19 @@ import clsx from 'clsx';
 
 interface SidebarProps {
   wsConnected?: boolean;
+  onSettingsClick?: () => void;
+  onAnalyticsClick?: () => void;
 }
 
-export const Sidebar = ({ wsConnected = false }: SidebarProps) => {
+export const Sidebar = ({ wsConnected = false, onSettingsClick, onAnalyticsClick }: SidebarProps) => {
   const items = [
     { icon: LayoutDashboard, label: 'Dashboard', active: true },
     { icon: Video, label: 'Vision Processing', active: false },
     { icon: Mic, label: 'Audio Engine', active: false },
     { icon: Globe, label: 'Translation', active: false },
     { icon: Cpu, label: 'Agent Mesh', active: false },
-    { icon: Activity, label: 'System Logs', active: false },
-    { icon: Settings, label: 'Preferences', active: false },
+    { icon: Activity, label: 'Analytics', active: false, onClick: onAnalyticsClick },
+    { icon: Settings, label: 'Preferences', active: false, onClick: onSettingsClick },
   ];
 
   return (
@@ -38,6 +40,7 @@ export const Sidebar = ({ wsConnected = false }: SidebarProps) => {
           return (
             <motion.button
               key={item.label}
+              onClick={item.onClick}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={clsx(

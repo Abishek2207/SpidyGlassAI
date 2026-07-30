@@ -23,8 +23,21 @@ export interface BoundingBox {
   id: number;
 }
 
+export interface DetectedObject {
+  label: string;
+  confidence: number;
+  bbox: [number, number, number, number];
+}
+
+export interface DetectedFace {
+  confidence: number;
+  bbox: [number, number, number, number];
+}
+
 export interface FrameResult {
   image: string | null;
   gesture: { gesture: string; confidence: number } | null;
+  objects?: DetectedObject[];
+  faces?: DetectedFace[];
   process_time_ms: number;
 }

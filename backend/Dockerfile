@@ -10,6 +10,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Preload heavy AI models into the container image
+RUN python preload_models.py
+
 # Make startup script executable
 RUN chmod +x start.sh
 

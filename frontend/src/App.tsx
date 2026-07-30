@@ -5,8 +5,11 @@ import { CenterDashboard } from './components/CenterDashboard';
 import { RightPanel } from './components/RightPanel';
 import { BottomPanel } from './components/BottomPanel';
 import { ParticleBackground } from './components/ParticleBackground';
+import { LoginOverlay } from './components/LoginOverlay';
+import { SettingsModal } from './components/SettingsModal';
+import { AnalyticsOverlay } from './components/AnalyticsOverlay';
+import { useAuthStore } from './store/authStore';
 import type { TelemetryPayload, FrameResult } from './types';
-
 export interface AgentResponse {
   transcript?: string;
   translated_text?: string;
@@ -19,19 +22,26 @@ export interface AgentResponse {
 }
 
 function App() {
+  const { token } = useAuthStore();
   const [telemetry, setTelemetry] = useState<TelemetryPayload | null>(null);
   const [frameResult, setFrameResult] = useState<FrameResult | null>(null);
   const [agentResponse, setAgentResponse] = useState<AgentResponse | null>(null);
   const [history, setHistory] = useState<AgentResponse[]>([]);
   const [cameraActive, setCameraActive] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+
   const ws = useRef<WebSocket | null>(null);
   const pingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    if (!token) return;
+
     const connect = () => {
       const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
-      ws.current = new WebSocket(wsUrl);
+      ws.current = new WebSocket(`${wsUrl}?token=${token}`);
 
       ws.current.onopen = () => {
         console.log('[SpiderGlass] Neural link established');
@@ -62,6 +72,8 @@ function App() {
               gesture: topGesture
                 ? { gesture: topGesture.gesture, confidence: topGesture.confidence }
                 : null,
+              objects: data.objects ?? [],
+              faces: data.faces ?? [],
               process_time_ms: data.process_time_ms ?? 0,
             });
           } else if (payload.type === 'agent_response') {
@@ -92,7 +104,7 @@ function App() {
       if (pingInterval.current) clearInterval(pingInterval.current);
       ws.current?.close();
     };
-  }, []);
+  }, [token]);
 
   const sendFrameToBackend = useCallback((base64Img: string) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -100,11 +112,29 @@ function App() {
     }
   }, []);
 
+  if (!token) {
+    return (
+      <div className="h-screen w-full bg-[#050505] text-white p-4 lg:p-6 overflow-hidden flex gap-6">
+        <ParticleBackground />
+        <LoginOverlay />
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen w-full bg-[#050505] text-white p-4 lg:p-6 overflow-hidden flex gap-6">
       <ParticleBackground />
-      {/* Left Navigation */}
-      <Sidebar wsConnected={wsConnected} />
+
+      {/* Overlays */}
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <AnalyticsOverlay isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} />
+
+      {/* Main Layout */}
+      <Sidebar 
+        wsConnected={wsConnected} 
+        onSettingsClick={() => setIsSettingsOpen(true)}
+        onAnalyticsClick={() => setIsAnalyticsOpen(true)}
+      />
       <ConversationHistory history={history} />
 
       {/* Main Content Area */}

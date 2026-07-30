@@ -9,7 +9,7 @@ services:
       - ENVIRONMENT=production
       - SARVAM_API_KEY=${SARVAM_API_KEY}
     volumes:
-      - ./backend/spiderglass.db:/app/spiderglass.db
+      - ./backend/spiderglass_dev.db:/app/spiderglass_dev.db
     restart: unless-stopped
 
   frontend:
