@@ -86,6 +86,11 @@ async def health_check():
     return {
         "status": "ok",
         "service": settings.app_name,
-        "environment": settings.app_env,
+        "environment": settings.ENVIRONMENT,
         "version": "2.0.0",
     }
+
+@app.get("/", tags=["Health"])
+@app.head("/", tags=["Health"])
+async def root_health_check():
+    return {"status": "ok", "message": "SpiderGlass AI Backend is running."}
