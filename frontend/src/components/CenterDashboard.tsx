@@ -91,8 +91,17 @@ export const CenterDashboard = ({ cameraActive, frameResult, onToggleCamera, sen
               playsInline
               muted
               autoPlay
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${frameResult?.image ? 'opacity-0' : 'opacity-100'}`}
             />
+            
+            {/* Backend Annotated Feed (with MediaPipe Landmarks) */}
+            {frameResult?.image && (
+              <img 
+                src={frameResult.image} 
+                alt="AI Vision Feed" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
 
             {/* AI-annotated overlay on top of live feed */}
             {frameResult?.objects?.map((obj, i) => (

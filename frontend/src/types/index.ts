@@ -11,6 +11,8 @@ export interface AgentTelemetry {
   status: 'idle' | 'active' | 'listening' | 'processing' | 'error' | 'online';
   confidence: number;
   latency_ms: number;
+  task?: string;
+  last_update?: number;
 }
 
 export interface TelemetryPayload {

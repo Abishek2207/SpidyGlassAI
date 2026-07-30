@@ -65,48 +65,47 @@ function App() {
 
   const { connectionState, sendMessage } = useConnectionManager(wsUrl, handleMessage, demoMode);
 
-  const toggleMic = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn('Speech Recognition not supported in this browser.');
-      return;
-    }
-
+  const toggleMic = useCallback(async () => {
     if (micActive) {
-      recognitionRef.current?.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current.stream.getTracks().forEach((track: any) => track.stop());
+        recognitionRef.current = null;
+      }
       setMicActive(false);
+      sendMessage('audio_end', '');
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event: any) => {
-      let interim = '';
-      let final = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          final += event.results[i][0].transcript;
-        } else {
-          interim += event.results[i][0].transcript;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = (reader.result as string).split(',')[1];
+            sendMessage('audio_chunk', base64data);
+          };
+          reader.readAsDataURL(e.data);
         }
-      }
-      setLiveTranscript(interim || final);
-      if (final.trim()) {
-        // Send finalized transcript to backend for translation + AI
-        sendMessage('text_message', final.trim());
-      }
-    };
+      };
 
-    recognition.onerror = () => setMicActive(false);
-    recognition.onend = () => { if (micActive) recognition.start(); };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setMicActive(true);
-  }, [micActive]);
+      mediaRecorder.start(250); // Capture chunk every 250ms
+      // Store custom object in ref to hold both recorder and stream
+      recognitionRef.current = {
+        stop: () => mediaRecorder.stop(),
+        stream: stream
+      };
+      
+      setMicActive(true);
+      setLiveTranscript(''); // Clear previous transcript on new recording
+    } catch (err) {
+      console.error('Error accessing microphone:', err);
+      setMicActive(false);
+    }
+  }, [micActive, sendMessage]);
 
   const sendFrameToBackend = useCallback((base64Img: string) => {
     sendMessage('frame', base64Img);

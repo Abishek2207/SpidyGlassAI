@@ -80,9 +80,14 @@ export const RightPanel = ({ telemetry, logs = [] }: RightPanelProps) => {
                 </span>
               </div>
               
-              <div className="flex justify-between items-end text-xs font-mono text-neutral-500">
-                <span>Conf: {(data.confidence * 100).toFixed(1)}%</span>
-                <span>{data.latency_ms}ms</span>
+              <div className="flex justify-between items-end text-[10px] font-mono text-neutral-400 mt-2">
+                <span>Task: <span className="text-white">{data.task || 'Idle'}</span></span>
+                <span>Lat: {data.latency_ms || 0}ms</span>
+              </div>
+              
+              <div className="flex justify-between items-end text-[9px] font-mono text-neutral-500 mt-1">
+                <span>Conf: {((data.confidence || 0) * 100).toFixed(1)}%</span>
+                <span>Update: {data.last_update ? new Date(data.last_update * 1000).toLocaleTimeString() : 'N/A'}</span>
               </div>
 
               {/* Animated progress bar for confidence */}
