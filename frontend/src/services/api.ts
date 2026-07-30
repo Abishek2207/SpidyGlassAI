@@ -1,6 +1,6 @@
 import { useAuthStore } from '../store/authStore';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://spidyglassai.onrender.com';
 const API_URL = `${BASE_URL}/api/v1`;
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {

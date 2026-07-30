@@ -40,7 +40,7 @@ function App() {
     if (!token) return;
 
     const connect = () => {
-      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const backendUrl = import.meta.env.VITE_API_URL || 'https://spidyglassai.onrender.com';
       const wsProtocol = backendUrl.startsWith('https') ? 'wss' : 'ws';
       const wsUrl = `${backendUrl.replace(/^https?:\/\//, `${wsProtocol}://`)}/ws`;
       ws.current = new WebSocket(`${wsUrl}?token=${token}`);

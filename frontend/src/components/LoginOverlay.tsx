@@ -12,7 +12,7 @@ export const LoginOverlay = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const BASE_URL = import.meta.env.VITE_API_URL || 'https://spidyglassai.onrender.com';
   const API_URL = `${BASE_URL}/api/v1`;
 
   const handleSubmit = async (e: React.FormEvent) => {
