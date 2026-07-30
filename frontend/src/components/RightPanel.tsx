@@ -102,16 +102,39 @@ export const RightPanel = ({ telemetry, logs = [] }: RightPanelProps) => {
         <h3 className="text-sm font-semibold tracking-widest text-neutral-400 uppercase flex items-center gap-2 mb-4">
           <Terminal className="w-4 h-4" /> System Logs
         </h3>
-        <div className="space-y-2 h-[150px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-2 h-[150px] overflow-y-auto pr-2">
           {logs.length === 0 ? (
-            <p className="text-neutral-500 font-mono text-xs text-center py-4">Waiting for system logs...</p>
+            <p className="text-neutral-500 font-mono text-xs text-center py-4">Waiting for system events...</p>
           ) : (
-            logs.map((log, i) => (
-              <div key={i} className="text-[10px] font-mono p-2 rounded-lg bg-black/40 border border-white/5 leading-relaxed">
-                <span className="text-cyan-400 opacity-70">[{new Date(log.timestamp * 1000).toLocaleTimeString()}]</span>{' '}
-                <span className="text-neutral-300">{log.message}</span>
-              </div>
-            ))
+            logs.map((log, i) => {
+              const level = log.level || 'info';
+              const levelColor =
+                level === 'warn'  ? 'text-yellow-400' :
+                level === 'error' ? 'text-red-400'    :
+                level === 'debug' ? 'text-neutral-500' :
+                'text-cyan-400';
+              const moduleColor =
+                log.module === 'vision'       ? 'bg-cyan-900/40 text-cyan-300 border-cyan-500/20'   :
+                log.module === 'speech'       ? 'bg-green-900/40 text-green-300 border-green-500/20' :
+                log.module === 'translation'  ? 'bg-blue-900/40 text-blue-300 border-blue-500/20'   :
+                log.module === 'conversation' ? 'bg-purple-900/40 text-purple-300 border-purple-500/20' :
+                log.module === 'device'       ? 'bg-orange-900/40 text-orange-300 border-orange-500/20' :
+                'bg-white/5 text-neutral-400 border-white/10';
+              return (
+                <div key={i} className="text-[10px] font-mono p-2 rounded-lg bg-black/40 border border-white/5 leading-relaxed">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-neutral-600">{new Date(log.timestamp * 1000).toLocaleTimeString()}</span>
+                    {log.module && (
+                      <span className={`px-1 py-0.5 rounded border text-[8px] uppercase tracking-widest ${moduleColor}`}>
+                        {log.module}
+                      </span>
+                    )}
+                    <span className={`text-[8px] uppercase tracking-widest ${levelColor}`}>{level}</span>
+                  </div>
+                  <span className="text-neutral-300">{log.message}</span>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

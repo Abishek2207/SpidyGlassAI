@@ -54,12 +54,18 @@ function App() {
         faces: data.faces ?? [],
         process_time_ms: data.process_time_ms ?? 0,
       });
+      // Show confirmed gesture sentence in the live transcript
+      if (data.sentence && data.sentence.trim()) {
+        setLiveTranscript(`✋ ${data.sentence}`);
+      }
     } else if (payload.type === 'agent_response') {
       setAgentResponse(payload.data);
-      setLiveTranscript(payload.data.transcript || '');
+      if (payload.data.transcript) {
+        setLiveTranscript(payload.data.transcript);
+      }
       setHistory(prev => [payload.data, ...prev].slice(0, 50));
     } else if (payload.type === 'system_log') {
-      setSystemLogs(prev => [payload.data, ...prev].slice(0, 10));
+      setSystemLogs(prev => [payload.data, ...prev].slice(0, 50));
     }
   }, []);
 

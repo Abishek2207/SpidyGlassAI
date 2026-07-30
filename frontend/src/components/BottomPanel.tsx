@@ -65,15 +65,23 @@ export const BottomPanel = ({ transcript, translatedText, aiReply, pipelineStage
             {renderWithDemoBadge(transcript, 'Waiting for audio input...')}
           </motion.p>
         </AnimatePresence>
-        {/* Waveform animation */}
+        {/* Waveform animation — only active when mic is live */}
         <div className="h-4 flex items-center gap-[2px] opacity-40 mt-2">
           {[...Array(22)].map((_, i) => (
-            <motion.div
-              key={i}
-              animate={{ height: ['20%', '100%', '20%'] }}
-              transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.08 }}
-              className="w-[2px] bg-cyan-500 rounded-full"
-            />
+            micActive ? (
+              <motion.div
+                key={i}
+                animate={{ height: ['20%', '100%', '20%'] }}
+                transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.06, ease: 'easeInOut' }}
+                className="w-[2px] bg-cyan-500 rounded-full"
+              />
+            ) : (
+              <div
+                key={i}
+                className="w-[2px] rounded-full bg-white/20"
+                style={{ height: `${10 + (i % 5) * 8}%` }}
+              />
+            )
           ))}
         </div>
       </motion.div>

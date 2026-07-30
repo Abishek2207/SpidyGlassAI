@@ -22,18 +22,25 @@ export const useConnectionManager = (
   const healthPollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  let isDestroyed = false;
+  // Use a ref (not a variable) so the closure always sees the latest value
+  const isDestroyed = useRef(false);
+  const reconnectDelay = useRef(2000);
 
   const connectWs = useCallback(() => {
-    if (isDestroyed || ws.current?.readyState === WebSocket.OPEN || ws.current?.readyState === WebSocket.CONNECTING) return;
+    if (isDestroyed.current) return;
+
+    const state = ws.current?.readyState;
+    if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
 
     try {
-      ws.current = new WebSocket(`${wsUrl}?demoMode=${demoMode}`);
+      const socket = new WebSocket(`${wsUrl}?demoMode=${demoMode}`);
+      ws.current = socket;
 
-      ws.current.onopen = () => {
-        if (isDestroyed) { ws.current?.close(); return; }
-        setConnectionState(prev => ({ ...prev, status: 'connected', wsConnected: true, lastPing: Date.now() }));
-        
+      socket.onopen = () => {
+        if (isDestroyed.current) { socket.close(); return; }
+        reconnectDelay.current = 2000; // reset backoff on success
+        setConnectionState({ status: 'connected', wsConnected: true, lastPing: Date.now() });
+
         if (pingInterval.current) clearInterval(pingInterval.current);
         pingInterval.current = setInterval(() => {
           if (ws.current?.readyState === WebSocket.OPEN) {
@@ -42,64 +49,76 @@ export const useConnectionManager = (
         }, 5000);
       };
 
-      ws.current.onmessage = (event) => {
-        if (isDestroyed) return;
+      socket.onmessage = (event) => {
+        if (isDestroyed.current) return;
         try {
           const payload = JSON.parse(event.data);
+          if (payload.type === 'pong') {
+            setConnectionState(prev => ({ ...prev, lastPing: Date.now() }));
+            return;
+          }
           onMessage(payload);
         } catch (e) {
           console.error('[ConnectionManager] Message parse error:', e);
         }
       };
 
-      ws.current.onclose = () => {
-        if (isDestroyed) return;
+      socket.onclose = () => {
+        if (isDestroyed.current) return;
         setConnectionState(prev => ({ ...prev, status: 'reconnecting', wsConnected: false }));
         if (pingInterval.current) clearInterval(pingInterval.current);
-        
-        // Try to reconnect in 2 seconds
+
+        // Exponential backoff capped at 10s
+        const delay = Math.min(reconnectDelay.current, 10000);
+        reconnectDelay.current = delay * 1.5;
+
         if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
-        reconnectTimeout.current = setTimeout(connectWs, 2000);
+        reconnectTimeout.current = setTimeout(connectWs, delay);
       };
 
-      ws.current.onerror = () => {
-        console.error('[ConnectionManager] WebSocket error');
+      socket.onerror = (err) => {
+        console.error('[ConnectionManager] WebSocket error:', err);
+        // onclose fires automatically after onerror — no need to act here
       };
     } catch (e) {
-      console.error('[ConnectionManager] Failed to create WebSocket');
+      console.error('[ConnectionManager] Failed to create WebSocket:', e);
+      // Schedule retry even if construction failed
+      reconnectTimeout.current = setTimeout(connectWs, reconnectDelay.current);
     }
-  }, [wsUrl, onMessage, demoMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsUrl, demoMode]);
 
   const checkHealth = useCallback(async () => {
-    if (isDestroyed) return;
+    if (isDestroyed.current) return;
     try {
-      const data = await fetchWithRetry('/health', { retries: 0, timeout: 1500 });
-      if (data.status === 'online') {
-        // Backend is alive. If WS is dead, status is reconnecting. If WS is alive, status is connected.
+      const data = await fetchWithRetry('/health', { retries: 0, timeout: 2000 });
+      if (data?.status === 'online') {
         if (ws.current?.readyState === WebSocket.OPEN) {
           setConnectionState(prev => ({ ...prev, status: 'connected', lastPing: Date.now() }));
         } else {
+          // Backend is alive, but WS is dead — force a new connection
           setConnectionState(prev => ({ ...prev, status: 'reconnecting' }));
-          connectWs(); // Force reconnect attempt if we know it's online but WS is dead
+          connectWs();
         }
       }
-    } catch (e) {
-      setConnectionState(prev => ({ ...prev, status: 'reconnecting' }));
+    } catch {
+      // Backend unreachable — UI will show reconnecting
+      setConnectionState(prev => ({ ...prev, status: 'reconnecting', wsConnected: false }));
     }
   }, [connectWs]);
 
   useEffect(() => {
-    isDestroyed = false;
+    isDestroyed.current = false;
     connectWs();
-    
-    // Poll health every 2 seconds
+
+    // Poll REST health every 2 seconds as belt-and-suspenders
     healthPollInterval.current = setInterval(checkHealth, 2000);
 
     return () => {
-      isDestroyed = true;
+      isDestroyed.current = true;
       if (healthPollInterval.current) clearInterval(healthPollInterval.current);
-      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
-      if (pingInterval.current) clearInterval(pingInterval.current);
+      if (reconnectTimeout.current)   clearTimeout(reconnectTimeout.current);
+      if (pingInterval.current)       clearInterval(pingInterval.current);
       ws.current?.close();
     };
   }, [connectWs, checkHealth]);
@@ -108,10 +127,13 @@ export const useConnectionManager = (
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({ type, data }));
     } else {
-      console.warn('[ConnectionManager] Cannot send message, WebSocket not connected.');
-      // REST Fallback could be implemented here for specific message types
+      console.warn('[ConnectionManager] Cannot send — WebSocket not open. State:', ws.current?.readyState);
+      // Attempt reconnect if user is actively trying to send
+      if (ws.current?.readyState !== WebSocket.CONNECTING) {
+        connectWs();
+      }
     }
-  }, []);
+  }, [connectWs]);
 
   return { connectionState, sendMessage };
 };

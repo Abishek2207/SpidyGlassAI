@@ -18,8 +18,19 @@ class TranslationService:
 
         if not settings.sarvam_api_key or settings.sarvam_api_key == "your-sarvam-api-key-here":
             logger.info("Demo Mode: Returning mocked translation.")
+            # Produce a realistic demo translation that reflects the input
+            demo_translations = {
+                "en-IN": req.input,
+                "hi-IN": f"[DEMO PROVIDER] {req.input} (हिंदी अनुवाद उपलब्ध होगा जब Sarvam AI कॉन्फ़िगर हो)",
+                "ta-IN": f"[DEMO PROVIDER] {req.input} (தமிழ் மொழிபெயர்ப்பு Sarvam AI உடன் கிடைக்கும்)",
+                "te-IN": f"[DEMO PROVIDER] {req.input} (తెలుగు అనువాదం Sarvam AI తో అందుబాటులో ఉంటుంది)",
+            }
+            translated = demo_translations.get(
+                req.target_language_code,
+                f"[DEMO PROVIDER] Translation of: {req.input[:80]}..."
+            )
             return TranslationResponse(
-                translated_text=f"[DEMO PROVIDER] Simulated translation of input.",
+                translated_text=translated,
                 source_language_code=req.source_language_code,
                 target_language_code=req.target_language_code,
                 processing_time_ms=int((time.time() - start) * 1000),

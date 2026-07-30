@@ -85,12 +85,24 @@ app.include_router(ws_router)
 # ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
 async def health_check(demoMode: str = "true"):
+    from sqlalchemy import text
+    from app.core.database import AsyncSessionLocal
+
+    db_status = "disconnected"
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception:
+        db_status = "disconnected"
+
     return {
-        "status": "online",
-        "backend": "connected",
-        "database": "connected",
+        "status":    "online",
+        "backend":   "connected",
+        "database":  db_status,
         "websocket": "running",
-        "demo_mode": demoMode.lower() == "true"
+        "demo_mode": demoMode.lower() == "true",
+        "version":   "2.0.0",
     }
 
 @app.get("/", tags=["Health"])
