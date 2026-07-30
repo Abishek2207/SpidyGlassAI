@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useConnectionManager } from './hooks/useConnectionManager';
 import { Sidebar } from './components/Sidebar';
 import { ConversationHistory } from './components/ConversationHistory';
 import { CenterDashboard } from './components/CenterDashboard';
@@ -24,89 +25,45 @@ function App() {
   const [frameResult, setFrameResult] = useState<FrameResult | null>(null);
   const [agentResponse, setAgentResponse] = useState<AgentResponse | null>(null);
   const [history, setHistory] = useState<AgentResponse[]>([]);
+  const [systemLogs, setSystemLogs] = useState<any[]>([]);
   const [cameraActive, setCameraActive] = useState(false);
-  const [wsConnected, setWsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
-  
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-
-  const ws = useRef<WebSocket | null>(null);
-  const pingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const recognitionRef = useRef<any>(null);
   const [micActive, setMicActive] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
+  const backendUrl = import.meta.env.VITE_API_URL || 'https://spidyglassai.onrender.com';
+  const wsProtocol = backendUrl.startsWith('https') ? 'wss' : 'ws';
+  const wsUrl = `${backendUrl.replace(/^https?:\/\//, `${wsProtocol}://`)}/ws`;
 
-  useEffect(() => {
-    let destroyed = false;
+  const [demoMode, setDemoMode] = useState(true);
 
-    const connect = () => {
-      if (destroyed) return;
-      const backendUrl = import.meta.env.VITE_API_URL || 'https://spidyglassai.onrender.com';
-      const wsProtocol = backendUrl.startsWith('https') ? 'wss' : 'ws';
-      const wsUrl = `${backendUrl.replace(/^https?:\/\//, `${wsProtocol}://`)}/ws`;
-      ws.current = new WebSocket(wsUrl);
-
-      ws.current.onopen = () => {
-        if (destroyed) { ws.current?.close(); return; }
-        console.log('[SpiderGlass] Neural link established');
-        setWsConnected(true);
-        pingInterval.current = setInterval(() => {
-          ws.current?.send(JSON.stringify({ type: 'ping' }));
-        }, 30000);
-      };
-
-      ws.current.onmessage = (event) => {
-        if (destroyed) return;
-        try {
-          const payload = JSON.parse(event.data);
-          if (payload.type === 'telemetry') {
-            setTelemetry(payload.data);
-          } else if (payload.type === 'frame_result') {
-            const data = payload.data;
-            const topGesture = data.gestures?.[0] ?? null;
-            setFrameResult({
-              image: data.image ?? null,
-              gesture: topGesture
-                ? { gesture: topGesture.gesture, confidence: topGesture.confidence }
-                : null,
-              objects: data.objects ?? [],
-              faces: data.faces ?? [],
-              process_time_ms: data.process_time_ms ?? 0,
-            });
-          } else if (payload.type === 'agent_response') {
-            setAgentResponse(payload.data);
-            setLiveTranscript(payload.data.transcript || '');
-            setHistory(prev => [payload.data, ...prev].slice(0, 50));
-          } else if (payload.type === 'pong') {
-            // keepalive acknowledged
-          }
-        } catch (e) {
-          console.error('[SpiderGlass] Link corruption', e);
-        }
-      };
-
-      ws.current.onclose = () => {
-        setWsConnected(false);
-        if (pingInterval.current) clearInterval(pingInterval.current);
-        if (!destroyed) {
-          console.log('[SpiderGlass] Neural link severed — reconnecting in 3s');
-          setTimeout(connect, 3000);
-        }
-      };
-
-      ws.current.onerror = (e) => {
-        console.error('[SpiderGlass] WebSocket error', e);
-      };
-    };
-
-    connect();
-    return () => {
-      destroyed = true;
-      if (pingInterval.current) clearInterval(pingInterval.current);
-      ws.current?.close();
-    };
+  const handleMessage = useCallback((payload: any) => {
+    if (payload.type === 'telemetry') {
+      setTelemetry(payload.data);
+    } else if (payload.type === 'frame_result') {
+      const data = payload.data;
+      const topGesture = data.gestures?.[0] ?? null;
+      setFrameResult({
+        image: data.image ?? null,
+        gesture: topGesture
+          ? { gesture: topGesture.gesture, confidence: topGesture.confidence }
+          : null,
+        objects: data.objects ?? [],
+        faces: data.faces ?? [],
+        process_time_ms: data.process_time_ms ?? 0,
+      });
+    } else if (payload.type === 'agent_response') {
+      setAgentResponse(payload.data);
+      setLiveTranscript(payload.data.transcript || '');
+      setHistory(prev => [payload.data, ...prev].slice(0, 50));
+    } else if (payload.type === 'system_log') {
+      setSystemLogs(prev => [payload.data, ...prev].slice(0, 10));
+    }
   }, []);
+
+  const { connectionState, sendMessage } = useConnectionManager(wsUrl, handleMessage, demoMode);
 
   const toggleMic = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -139,9 +96,7 @@ function App() {
       setLiveTranscript(interim || final);
       if (final.trim()) {
         // Send finalized transcript to backend for translation + AI
-        if (ws.current?.readyState === WebSocket.OPEN) {
-          ws.current.send(JSON.stringify({ type: 'text_message', data: final.trim() }));
-        }
+        sendMessage('text_message', final.trim());
       }
     };
 
@@ -154,10 +109,8 @@ function App() {
   }, [micActive]);
 
   const sendFrameToBackend = useCallback((base64Img: string) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: 'frame', data: base64Img }));
-    }
-  }, []);
+    sendMessage('frame', base64Img);
+  }, [sendMessage]);
 
 
   return (
@@ -170,8 +123,10 @@ function App() {
 
       {/* Main Layout */}
       <Sidebar 
-        wsConnected={wsConnected} 
+        wsConnected={connectionState.status === 'connected'} 
         activeTab={activeTab}
+        demoMode={demoMode}
+        onDemoToggle={() => setDemoMode(!demoMode)}
         onTabChange={setActiveTab}
         onSettingsClick={() => setIsSettingsOpen(true)}
         onAnalyticsClick={() => setIsAnalyticsOpen(true)}
@@ -191,7 +146,7 @@ function App() {
                 onToggleCamera={() => setCameraActive(!cameraActive)}
                 sendFrameToBackend={sendFrameToBackend}
               />
-              <RightPanel telemetry={telemetry} />
+              <RightPanel telemetry={telemetry} logs={systemLogs} />
             </>
           ) : (
             <div className="flex-1 glass-panel rounded-3xl flex flex-col items-center justify-center border border-white/5 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden">

@@ -108,19 +108,41 @@ def _build_telemetry_payload() -> dict:
     }
 
 
-async def _telemetry_loop(client_id: str):
+async def _telemetry_loop(client_id: str, demo_mode: bool = True):
     """Pushes 1 Hz telemetry to a specific client until they disconnect."""
+    log_messages = [
+        "Neural mesh synchronization complete.",
+        "Allocating GPU resources for vision inference.",
+        "Translation pipeline idle.",
+        "Agent orchestrator awaiting input.",
+        "Context window expanded.",
+        "Latency spike detected, resolving.",
+        "Vision model confidence: 0.98."
+    ]
+    import random
+
     while client_id in manager.active:
         await manager.send(client_id, _build_telemetry_payload())
+        
+        if demo_mode and random.random() > 0.7:
+            await manager.send(client_id, {
+                "type": "system_log",
+                "data": {
+                    "timestamp": time.time(),
+                    "message": f"[DEMO LOG] {random.choice(log_messages)}",
+                    "level": "info"
+                }
+            })
+            
         await asyncio.sleep(1.0)
 
 
-async def handle_connection(client_id: str, ws: WebSocket):
+async def handle_connection(client_id: str, ws: WebSocket, demo_mode: bool = True):
     """Main coroutine managing the lifecycle of a single WebSocket client."""
     await manager.connect(client_id, ws)
 
     # Start background telemetry push for this client
-    telemetry_task = asyncio.create_task(_telemetry_loop(client_id))
+    telemetry_task = asyncio.create_task(_telemetry_loop(client_id, demo_mode))
 
     try:
         while True:

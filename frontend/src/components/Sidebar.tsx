@@ -5,12 +5,14 @@ import clsx from 'clsx';
 interface SidebarProps {
   wsConnected?: boolean;
   activeTab?: string;
+  demoMode?: boolean;
+  onDemoToggle?: () => void;
   onTabChange?: (tab: string) => void;
   onSettingsClick?: () => void;
   onAnalyticsClick?: () => void;
 }
 
-export const Sidebar = ({ wsConnected = false, activeTab = 'Dashboard', onTabChange, onSettingsClick, onAnalyticsClick }: SidebarProps) => {
+export const Sidebar = ({ wsConnected = false, activeTab = 'Dashboard', demoMode = true, onDemoToggle, onTabChange, onSettingsClick, onAnalyticsClick }: SidebarProps) => {
   const items = [
     { icon: LayoutDashboard, label: 'Dashboard' },
     { icon: Video, label: 'Vision Processing' },
@@ -31,13 +33,19 @@ export const Sidebar = ({ wsConnected = false, activeTab = 'Dashboard', onTabCha
         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.5)]">
           <Activity className="w-5 h-5 text-white" />
         </div>
-        <div className="hidden lg:block">
+        <div className="hidden lg:block cursor-pointer select-none" onClick={onDemoToggle}>
           <h1 className="text-xl font-medium tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-white/50">
             SpidyGlass
           </h1>
-          <span className="text-[9px] uppercase tracking-widest text-cyan-400 font-bold bg-cyan-900/30 px-2 py-0.5 rounded-full border border-cyan-500/30">
-            Demo Mode
-          </span>
+          {demoMode ? (
+            <span className="text-[9px] uppercase tracking-widest text-cyan-400 font-bold bg-cyan-900/30 px-2 py-0.5 rounded-full border border-cyan-500/30">
+              Demo Mode ON
+            </span>
+          ) : (
+            <span className="text-[9px] uppercase tracking-widest text-neutral-400 font-bold bg-neutral-900/30 px-2 py-0.5 rounded-full border border-neutral-500/30">
+              Demo Mode OFF
+            </span>
+          )}
         </div>
       </div>
 
@@ -73,12 +81,11 @@ export const Sidebar = ({ wsConnected = false, activeTab = 'Dashboard', onTabCha
       <div className="mt-auto px-2">
         <div className={`p-4 rounded-2xl border flex flex-col items-center lg:items-start gap-2 transition-all duration-500 ${
           wsConnected
-            ? 'bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-cyan-500/20'
-            : 'bg-gradient-to-br from-red-900/30 to-neutral-900/40 border-red-500/20'
+            ? 'bg-gradient-to-br from-green-900/20 to-neutral-900/40 border-green-500/20'
+            : 'bg-gradient-to-br from-yellow-900/20 to-neutral-900/40 border-yellow-500/20'
         }`}>
-          <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.8)]' : 'bg-red-400'}`}></div>
-          <p className="text-xs text-cyan-200/80 hidden lg:block font-mono">
-            {wsConnected ? <>System Online<br/>Neural Mesh Active</> : <>Connecting...<br/>Backend Offline</>}
+          <p className="text-sm font-medium tracking-wide">
+            {wsConnected ? '🟢 Connected' : '🟡 Reconnecting...'}
           </p>
         </div>
       </div>

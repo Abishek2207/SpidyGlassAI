@@ -4,6 +4,9 @@ Production-ready setup: CORS, lifespan, exception handlers, routers.
 """
 from contextlib import asynccontextmanager
 import logging
+import time
+import datetime
+import psutil
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -83,10 +86,10 @@ app.include_router(ws_router)
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {
-        "status": "ok",
-        "service": settings.app_name,
-        "environment": settings.ENVIRONMENT,
-        "version": "2.0.0",
+        "status": "online",
+        "version": "1.0.0",
+        "uptime": str(datetime.timedelta(seconds=int(time.time() - psutil.boot_time()))),
+        "database": "connected"
     }
 
 @app.get("/", tags=["Health"])

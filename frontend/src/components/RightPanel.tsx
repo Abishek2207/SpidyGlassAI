@@ -1,8 +1,13 @@
 import { motion } from 'framer-motion';
-import { Cpu, Activity } from 'lucide-react';
+import { Cpu, Activity, Terminal } from 'lucide-react';
 import type { TelemetryPayload } from '../types';
 
-export const RightPanel = ({ telemetry }: { telemetry: TelemetryPayload | null }) => {
+interface RightPanelProps {
+  telemetry?: TelemetryPayload | null;
+  logs?: any[];
+}
+
+export const RightPanel = ({ telemetry, logs = [] }: RightPanelProps) => {
   const agents = telemetry?.agents || {};
   const sys = telemetry?.system || { fps: 0, gpu_utilization: 0, battery: 0, latency_ms: 0 };
 
@@ -84,6 +89,25 @@ export const RightPanel = ({ telemetry }: { telemetry: TelemetryPayload | null }
               <div className="absolute bottom-0 left-0 h-[2px] bg-cyan-500/50" style={{ width: `${data.confidence * 100}%` }}></div>
             </motion.div>
           ))}
+        </div>
+      </div>
+
+      {/* System Logs */}
+      <div className="glass-panel rounded-3xl p-5 border border-white/5 relative mt-4 mb-4 flex-shrink-0 min-h-[200px]">
+        <h3 className="text-sm font-semibold tracking-widest text-neutral-400 uppercase flex items-center gap-2 mb-4">
+          <Terminal className="w-4 h-4" /> System Logs
+        </h3>
+        <div className="space-y-2 h-[150px] overflow-y-auto pr-2 custom-scrollbar">
+          {logs.length === 0 ? (
+            <p className="text-neutral-500 font-mono text-xs text-center py-4">Waiting for system logs...</p>
+          ) : (
+            logs.map((log, i) => (
+              <div key={i} className="text-[10px] font-mono p-2 rounded-lg bg-black/40 border border-white/5 leading-relaxed">
+                <span className="text-cyan-400 opacity-70">[{new Date(log.timestamp * 1000).toLocaleTimeString()}]</span>{' '}
+                <span className="text-neutral-300">{log.message}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </motion.div>

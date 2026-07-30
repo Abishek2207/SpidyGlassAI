@@ -6,7 +6,7 @@ router = APIRouter(tags=["Device / WebSocket"])
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(ws: WebSocket, token: str = Query(None)):
+async def websocket_endpoint(ws: WebSocket, token: str = Query(None), demoMode: str = Query("true")):
     """
     Main real-time WebSocket gateway.
     Token is optional - auth bypassed for open access mode.
@@ -22,8 +22,9 @@ async def websocket_endpoint(ws: WebSocket, token: str = Query(None)):
     else:
         user_id = "anon"
 
+    is_demo = demoMode.lower() == "true"
     client_id = f"user_{user_id}_{uuid.uuid4().hex[:8]}"
-    await handle_connection(client_id, ws)
+    await handle_connection(client_id, ws, is_demo)
 
 
 
