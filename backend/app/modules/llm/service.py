@@ -19,7 +19,13 @@ class LLMService:
         start = time.time()
 
         if not settings.sarvam_api_key or settings.sarvam_api_key == "your-sarvam-api-key-here":
-            raise SarvamAPIException("SARVAM_API_KEY is missing. Please configure your Sarvam API key to enable real LLM responses.")
+            logger.info("Demo Mode: Returning mocked LLM response.")
+            last_msg = req.messages[-1].content if req.messages else ""
+            return LLMResponse(
+                reply=f"[DEMO RESPONSE] Acknowledged: '{last_msg[:40]}...'. This is a simulated multi-agent response designed for the investor demo.",
+                model=SARVAM_LLM_MODEL,
+                processing_time_ms=int((time.time() - start) * 1000),
+            )
 
         messages = [{"role": "system", "content": req.system_prompt}]
         messages += [{"role": m.role, "content": m.content} for m in req.messages]

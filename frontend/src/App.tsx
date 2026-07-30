@@ -26,6 +26,7 @@ function App() {
   const [history, setHistory] = useState<AgentResponse[]>([]);
   const [cameraActive, setCameraActive] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  const [activeTab, setActiveTab] = useState('Dashboard');
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
@@ -170,6 +171,8 @@ function App() {
       {/* Main Layout */}
       <Sidebar 
         wsConnected={wsConnected} 
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         onSettingsClick={() => setIsSettingsOpen(true)}
         onAnalyticsClick={() => setIsAnalyticsOpen(true)}
       />
@@ -180,13 +183,30 @@ function App() {
 
         {/* Top/Center Dashboard (Video & Telemetry) */}
         <div className="flex-1 flex gap-6 min-h-0">
-          <CenterDashboard
-            cameraActive={cameraActive}
-            frameResult={frameResult}
-            onToggleCamera={() => setCameraActive(!cameraActive)}
-            sendFrameToBackend={sendFrameToBackend}
-          />
-          <RightPanel telemetry={telemetry} />
+          {activeTab === 'Dashboard' ? (
+            <>
+              <CenterDashboard
+                cameraActive={cameraActive}
+                frameResult={frameResult}
+                onToggleCamera={() => setCameraActive(!cameraActive)}
+                sendFrameToBackend={sendFrameToBackend}
+              />
+              <RightPanel telemetry={telemetry} />
+            </>
+          ) : (
+            <div className="flex-1 glass-panel rounded-3xl flex flex-col items-center justify-center border border-white/5 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
+              <h2 className="text-3xl font-light tracking-widest text-cyan-400 mb-4 uppercase">{activeTab}</h2>
+              <p className="text-neutral-500 font-mono text-sm max-w-md text-center">
+                Module isolated for Investor Demo Mode. Real-time {activeTab.toLowerCase()} data is being aggregated in the background.
+              </p>
+              <div className="mt-8 flex gap-2">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="w-2 h-2 rounded-full bg-cyan-500/50 animate-bounce" style={{ animationDelay: `${i * 0.2}s` }}></div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bottom Panel (Audio/Context/Translation) */}

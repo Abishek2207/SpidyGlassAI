@@ -10,6 +10,24 @@ interface BottomPanelProps {
   onMicToggle?: () => void;
 }
 
+const renderWithDemoBadge = (text?: string, fallback?: string) => {
+  if (!text) return fallback;
+  if (text.startsWith('[DEMO PROVIDER]') || text.startsWith('[DEMO RESPONSE]')) {
+    const isProvider = text.startsWith('[DEMO PROVIDER]');
+    const badgeText = isProvider ? 'DEMO PROVIDER' : 'DEMO RESPONSE';
+    const cleanText = text.replace(/\[DEMO (PROVIDER|RESPONSE)\]\s*/, '');
+    return (
+      <span className="leading-relaxed">
+        <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase mr-2 align-middle border ${isProvider ? 'bg-cyan-900/40 text-cyan-400 border-cyan-500/30' : 'bg-purple-900/40 text-purple-400 border-purple-500/30'}`}>
+          {badgeText}
+        </span>
+        {cleanText}
+      </span>
+    );
+  }
+  return text;
+};
+
 export const BottomPanel = ({ transcript, translatedText, aiReply, pipelineStages, micActive, onMicToggle }: BottomPanelProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-48 mt-6">
@@ -44,7 +62,7 @@ export const BottomPanel = ({ transcript, translatedText, aiReply, pipelineStage
             exit={{ opacity: 0 }}
             className="text-base font-light italic text-neutral-300 flex-1"
           >
-            {transcript ?? 'Waiting for audio input...'}
+            {renderWithDemoBadge(transcript, 'Waiting for audio input...')}
           </motion.p>
         </AnimatePresence>
         {/* Waveform animation */}
@@ -81,7 +99,7 @@ export const BottomPanel = ({ transcript, translatedText, aiReply, pipelineStage
             exit={{ opacity: 0 }}
             className="text-xl font-medium text-white flex-1 flex items-center"
           >
-            {translatedText ?? 'ऑडियो इनपुट की प्रतीक्षा है...'}
+            {renderWithDemoBadge(translatedText, 'ऑडियो इनपुट की प्रतीक्षा है...')}
           </motion.p>
         </AnimatePresence>
       </motion.div>
@@ -108,7 +126,7 @@ export const BottomPanel = ({ transcript, translatedText, aiReply, pipelineStage
             exit={{ opacity: 0 }}
             className="text-sm text-neutral-300 font-light relative z-10 leading-relaxed overflow-y-auto"
           >
-            {aiReply ?? 'Perform a sign language gesture or speak to begin.'}
+            {renderWithDemoBadge(aiReply, 'Perform a sign language gesture or speak to begin.')}
           </motion.p>
         </AnimatePresence>
       </motion.div>
