@@ -132,7 +132,7 @@ async def handle_connection(client_id: str, ws: WebSocket):
                 await manager.send(client_id, {"type": "pong"})
 
             # ── Frame Data → Camera Provider ───────────────────────────────────
-            if msg_type == "frame" and data:
+            elif msg_type == "frame" and data:
                 try:
                     # Initialize camera provider for session if not exists
                     if not hasattr(manager, "camera_providers"):

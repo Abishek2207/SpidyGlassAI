@@ -37,37 +37,33 @@ function App() {
   const [liveTranscript, setLiveTranscript] = useState<string>('');
 
   useEffect(() => {
+    let destroyed = false;
 
     const connect = () => {
+      if (destroyed) return;
       const backendUrl = import.meta.env.VITE_API_URL || 'https://spidyglassai.onrender.com';
       const wsProtocol = backendUrl.startsWith('https') ? 'wss' : 'ws';
       const wsUrl = `${backendUrl.replace(/^https?:\/\//, `${wsProtocol}://`)}/ws`;
       ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
+        if (destroyed) { ws.current?.close(); return; }
         console.log('[SpiderGlass] Neural link established');
         setWsConnected(true);
-        // Send ping every 30s to keep alive
         pingInterval.current = setInterval(() => {
           ws.current?.send(JSON.stringify({ type: 'ping' }));
         }, 30000);
       };
 
       ws.current.onmessage = (event) => {
+        if (destroyed) return;
         try {
           const payload = JSON.parse(event.data);
           if (payload.type === 'telemetry') {
             setTelemetry(payload.data);
           } else if (payload.type === 'frame_result') {
-            // New protocol: gestures is an array; pick first for display
             const data = payload.data;
             const topGesture = data.gestures?.[0] ?? null;
-            
-            // If a sentence is generated, treat it as an agent input equivalent
-            if (data.sentence && data.sentence.trim() !== '') {
-               // We will just show it in the frame for now
-            }
-            
             setFrameResult({
               image: data.image ?? null,
               gesture: topGesture
@@ -79,6 +75,7 @@ function App() {
             });
           } else if (payload.type === 'agent_response') {
             setAgentResponse(payload.data);
+            setLiveTranscript(payload.data.transcript || '');
             setHistory(prev => [payload.data, ...prev].slice(0, 50));
           } else if (payload.type === 'pong') {
             // keepalive acknowledged
@@ -91,8 +88,10 @@ function App() {
       ws.current.onclose = () => {
         setWsConnected(false);
         if (pingInterval.current) clearInterval(pingInterval.current);
-        console.log('[SpiderGlass] Neural link severed — reconnecting in 3s');
-        setTimeout(connect, 3000);
+        if (!destroyed) {
+          console.log('[SpiderGlass] Neural link severed — reconnecting in 3s');
+          setTimeout(connect, 3000);
+        }
       };
 
       ws.current.onerror = (e) => {
@@ -102,6 +101,7 @@ function App() {
 
     connect();
     return () => {
+      destroyed = true;
       if (pingInterval.current) clearInterval(pingInterval.current);
       ws.current?.close();
     };
