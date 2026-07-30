@@ -18,9 +18,9 @@ Protocol (JSON messages):
 """
 import asyncio
 import json
-import random
 import time
 import logging
+import psutil
 from fastapi import WebSocket, WebSocketDisconnect
 from app.modules.camera.service import CameraService
 from app.modules.camera.schema import CameraFrameRequest
@@ -75,26 +75,33 @@ manager = ConnectionManager()
 
 
 def _build_telemetry_payload() -> dict:
-    """Generate a realistic system + agent telemetry payload."""
+    """Generate a realistic system + agent telemetry payload using real OS metrics."""
+    cpu = psutil.cpu_percent(interval=None)
+    ram = psutil.virtual_memory().percent
+    
+    # We mock GPU and battery if they aren't easily available, but CPU/RAM are real.
+    # In a real deployed edge device (like Jetson), we'd read sysfs for GPU.
+    
     return {
         "type": "telemetry",
         "data": {
             "system": {
-                "fps": random.randint(28, 32),
-                "gpu_utilization": random.randint(45, 85),
-                "cpu_utilization": random.randint(20, 60),
-                "battery": 78,
-                "latency_ms": random.randint(12, 45),
-                "uptime_seconds": int(time.time() % 86400),
+                "fps": 30, # Could be dynamically updated from camera service
+                "gpu_utilization": 0, # Placeholder until NVML is integrated
+                "cpu_utilization": cpu,
+                "ram_utilization": ram,
+                "battery": 100, # Assuming plugged in
+                "latency_ms": 15, # Approximated network latency
+                "uptime_seconds": int(time.time() - psutil.boot_time()),
             },
             "agents": {
-                "vision":      {"status": "active",    "confidence": round(random.uniform(0.87, 0.99), 3), "latency_ms": random.randint(8, 20)},
-                "speech":      {"status": "listening", "confidence": round(random.uniform(0.70, 0.95), 3), "latency_ms": random.randint(50, 150)},
-                "translation": {"status": "idle",      "confidence": 0.0, "latency_ms": 0},
-                "context":     {"status": "active",    "confidence": round(random.uniform(0.90, 0.99), 3), "latency_ms": random.randint(5, 12)},
-                "voice":       {"status": "idle",      "confidence": 0.0, "latency_ms": 0},
-                "safety":      {"status": "active",    "confidence": 1.0, "latency_ms": random.randint(1, 4)},
-                "device":      {"status": "active",    "confidence": 1.0, "latency_ms": 0},
+                "vision":      {"status": "online", "confidence": 1.0, "latency_ms": 0},
+                "speech":      {"status": "online", "confidence": 1.0, "latency_ms": 0},
+                "translation": {"status": "online", "confidence": 1.0, "latency_ms": 0},
+                "context":     {"status": "online", "confidence": 1.0, "latency_ms": 0},
+                "voice":       {"status": "online", "confidence": 1.0, "latency_ms": 0},
+                "safety":      {"status": "online", "confidence": 1.0, "latency_ms": 0},
+                "device":      {"status": "online", "confidence": 1.0, "latency_ms": 0},
             },
         },
         "ts": time.time(),

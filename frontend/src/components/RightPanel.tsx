@@ -20,16 +20,16 @@ export const RightPanel = ({ telemetry }: { telemetry: TelemetryPayload | null }
         
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-black/40 p-3 rounded-2xl border border-white/5">
-            <p className="text-xs text-neutral-500 font-mono">GPU</p>
-            <p className="text-xl font-light text-cyan-400">{sys.gpu_utilization}%</p>
+            <p className="text-xs text-neutral-500 font-mono">CPU</p>
+            <p className="text-xl font-light text-cyan-400">{sys.cpu_utilization?.toFixed(1) || 0}%</p>
           </div>
           <div className="bg-black/40 p-3 rounded-2xl border border-white/5">
             <p className="text-xs text-neutral-500 font-mono">FPS</p>
             <p className="text-xl font-light text-white">{sys.fps}</p>
           </div>
           <div className="bg-black/40 p-3 rounded-2xl border border-white/5">
-            <p className="text-xs text-neutral-500 font-mono">BATTERY</p>
-            <p className="text-xl font-light text-green-400">{sys.battery}%</p>
+            <p className="text-xs text-neutral-500 font-mono">RAM</p>
+            <p className="text-xl font-light text-green-400">{sys.ram_utilization?.toFixed(1) || 0}%</p>
           </div>
           <div className="bg-black/40 p-3 rounded-2xl border border-white/5">
             <p className="text-xs text-neutral-500 font-mono">LATENCY</p>
@@ -68,7 +68,7 @@ export const RightPanel = ({ telemetry }: { telemetry: TelemetryPayload | null }
               <div className="flex justify-between items-center mb-2">
                 <span className="capitalize text-sm font-medium tracking-wide">{name} Agent</span>
                 <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
-                  data.status === 'active' || data.status === 'listening' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 
+                  data.status === 'online' || data.status === 'active' || data.status === 'listening' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 
                   'bg-neutral-800 text-neutral-400 border border-neutral-700'
                 }`}>
                   {data.status}
