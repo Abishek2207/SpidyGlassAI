@@ -32,7 +32,7 @@ function App() {
 
   const ws = useRef<WebSocket | null>(null);
   const pingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const [micActive, setMicActive] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
 
@@ -108,7 +108,7 @@ function App() {
   }, []);
 
   const toggleMic = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || (window as unknown as { webkitSpeechRecognition: typeof window.SpeechRecognition }).webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       console.warn('Speech Recognition not supported in this browser.');
       return;
@@ -125,7 +125,7 @@ function App() {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       let interim = '';
       let final = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -170,8 +170,6 @@ function App() {
       {/* Main Layout */}
       <Sidebar 
         wsConnected={wsConnected} 
-        micActive={micActive}
-        onMicToggle={toggleMic}
         onSettingsClick={() => setIsSettingsOpen(true)}
         onAnalyticsClick={() => setIsAnalyticsOpen(true)}
       />
