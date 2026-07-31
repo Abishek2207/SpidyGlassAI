@@ -1,27 +1,38 @@
 services:
+  # ── Backend (FastAPI via Docker) ──────────────────────────────────────────
   - type: web
-    name: spiderglass-backend
+    name: spidyglass-backend
     env: docker
+    region: singapore
+    plan: free
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
+    healthCheckPath: /health
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: PORT
+        value: 8000
       - key: SARVAM_API_KEY
-        sync: false
-      - key: SECRET_KEY
+        sync: false          # Set manually in Render dashboard → Environment
+      - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
-        sync: false
+        sync: false          # Set manually — use Render Postgres connection string
+      - key: REDIS_URL
+        sync: false          # Set manually — use Render Redis connection string
 
+  # ── Frontend (React SPA → Nginx via Docker) ───────────────────────────────
   - type: web
-    name: spiderglass-frontend
-    env: static
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
+    name: spidyglass-frontend
+    env: docker
+    region: singapore
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
     envVars:
       - key: VITE_API_URL
         fromService:
           type: web
-          name: spiderglass-backend
+          name: spidyglass-backend
           envVarKey: RENDER_EXTERNAL_URL

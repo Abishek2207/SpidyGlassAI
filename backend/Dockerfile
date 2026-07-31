@@ -10,8 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Preload heavy AI models into the container image
-RUN python preload_models.py
+# Preload models if they exist (non-fatal during build — model is loaded at runtime)
+RUN python preload_models.py || echo "No model found at build time — will load at runtime."
 
 # Make startup script executable
 RUN chmod +x start.sh

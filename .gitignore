@@ -5,9 +5,21 @@ dist/
 
 # Python
 venv/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
 spiderglass.db
+
+# ML – large binary / generated files
+backend/models/*.pt
+backend/models/*.onnx
+backend/ml/models/*.pt
+backend/ml/exports/*.onnx
+backend/ml/dataset/raw/
+backend/ml/runs/
+backend/ml/exports/confusion_matrix.png
 
 # System
 .DS_Store
+Thumbs.db
