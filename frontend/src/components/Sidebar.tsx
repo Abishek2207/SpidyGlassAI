@@ -1,94 +1,81 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Eye, 
+  Mic, 
+  Languages, 
+  Bot, 
+  Network, 
+  Terminal, 
+  Settings 
+} from 'lucide-react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Video, Mic, Globe, Settings, Cpu, Activity } from 'lucide-react';
-import clsx from 'clsx';
 
-interface SidebarProps {
-  wsConnected?: boolean;
-  activeTab?: string;
-  demoMode?: boolean;
-  onDemoToggle?: () => void;
-  onTabChange?: (tab: string) => void;
-  onSettingsClick?: () => void;
-  onAnalyticsClick?: () => void;
-}
+const navItems = [
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/vision', label: 'Vision Processing', icon: Eye },
+  { path: '/speech', label: 'Speech Engine', icon: Mic },
+  { path: '/translation', label: 'Translation', icon: Languages },
+  { path: '/assistant', label: 'AI Assistant', icon: Bot },
+  { path: '/mesh', label: 'Agent Mesh', icon: Network },
+  { path: '/logs', label: 'Logs', icon: Terminal },
+  { path: '/settings', label: 'Settings', icon: Settings },
+];
 
-export const Sidebar = ({ wsConnected = false, activeTab = 'Dashboard', demoMode = true, onDemoToggle, onTabChange, onSettingsClick, onAnalyticsClick }: SidebarProps) => {
-  const items = [
-    { icon: LayoutDashboard, label: 'Dashboard' },
-    { icon: Video, label: 'Vision Processing' },
-    { icon: Mic, label: 'Audio Engine' },
-    { icon: Globe, label: 'Translation' },
-    { icon: Cpu, label: 'Agent Mesh' },
-    { icon: Activity, label: 'Analytics', isAction: true, onClick: onAnalyticsClick },
-    { icon: Settings, label: 'Preferences', isAction: true, onClick: onSettingsClick },
-  ];
-
+const Sidebar: React.FC = () => {
   return (
-    <motion.div 
-      initial={{ x: -50, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      className="w-20 lg:w-64 glass-panel rounded-3xl p-4 flex flex-col h-full gap-2 transition-all"
-    >
-      <div className="flex items-center gap-3 mb-4 px-2 mt-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.5)]">
-          <Activity className="w-5 h-5 text-white" />
+    <div className="w-64 h-full p-6 flex flex-col border-r border-white/5 bg-black/40 backdrop-blur-3xl z-10">
+      <div className="flex items-center gap-3 mb-10 mt-2 px-2">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 shadow-[0_0_15px_rgba(59,130,246,0.5)] flex items-center justify-center">
+          <span className="font-bold text-sm tracking-tighter">SG</span>
         </div>
-        <div className="hidden lg:block cursor-pointer select-none" onClick={onDemoToggle}>
-          <h1 className="text-xl font-medium tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-white/50">
-            SpidyGlass
-          </h1>
-          {demoMode ? (
-            <span className="text-[9px] uppercase tracking-widest text-cyan-400 font-bold bg-cyan-900/30 px-2 py-0.5 rounded-full border border-cyan-500/30">
-              Demo Mode ON
-            </span>
-          ) : (
-            <span className="text-[9px] uppercase tracking-widest text-neutral-400 font-bold bg-neutral-900/30 px-2 py-0.5 rounded-full border border-neutral-500/30">
-              Demo Mode OFF
-            </span>
-          )}
-        </div>
+        <h1 className="text-xl font-semibold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+          SpidyGlass
+        </h1>
       </div>
 
-      <div className="flex-1 flex flex-col gap-2">
-        {items.map((item) => {
+      <nav className="flex-1 space-y-2 relative">
+        {navItems.map((item) => {
           const Icon = item.icon;
           return (
-            <motion.button
-              key={item.label}
-              onClick={() => {
-                if (item.isAction && item.onClick) {
-                  item.onClick();
-                } else if (onTabChange) {
-                  onTabChange(item.label);
-                }
-              }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={clsx(
-                "flex items-center gap-4 px-4 py-3 rounded-2xl transition-colors w-full",
-                (!item.isAction && activeTab === item.label)
-                  ? "bg-white/10 text-cyan-400 border border-white/10" 
-                  : "hover:bg-white/5 text-neutral-400"
-              )}
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative group ${
+                  isActive 
+                    ? 'text-white bg-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]' 
+                    : 'text-white/50 hover:text-white/90 hover:bg-white/5'
+                }`
+              }
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium hidden lg:block tracking-wide">{item.label}</span>
-            </motion.button>
+              {({ isActive }) => (
+                <>
+                  <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-blue-400' : 'text-white/40 group-hover:text-white/70'}`} />
+                  <span className="font-medium text-sm">{item.label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute inset-0 border border-white/20 rounded-xl pointer-events-none"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
           );
         })}
-      </div>
-
-      <div className="mt-auto px-2">
-        <div className={`p-4 rounded-2xl border flex flex-col items-center lg:items-start gap-2 transition-all duration-500 ${
-          wsConnected
-            ? 'bg-gradient-to-br from-green-900/20 to-neutral-900/40 border-green-500/20'
-            : 'bg-gradient-to-br from-yellow-900/20 to-neutral-900/40 border-yellow-500/20'
-        }`}>
-          <p className="text-sm font-medium tracking-wide">
-            {wsConnected ? '🟢 Connected' : '🟡 Reconnecting...'}
-          </p>
+      </nav>
+      
+      <div className="mt-auto pt-6 border-t border-white/10">
+        <div className="px-4 py-3 rounded-xl bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/20">
+          <p className="text-xs text-blue-200 font-medium">Demo Mode Active</p>
+          <p className="text-[10px] text-blue-200/50 mt-1">Prototype V1.0</p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
+
+export default Sidebar;

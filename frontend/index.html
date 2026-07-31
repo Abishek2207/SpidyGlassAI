@@ -4,7 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>SpidyGlass AI</title>
+    <meta name="description" content="SpidyGlass AI – Assistive communication platform powered by sign language recognition, speech synthesis, and Sarvam AI." />
+
+    <!-- MediaPipe: loaded as UMD globals via CDN (required by Vite bundler) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <!-- Expose MediaPipe exports as window globals expected by VisionProcessing.tsx -->
+    <script>
+      window.addEventListener('load', () => {
+        // @mediapipe/hands exposes Hands and HAND_CONNECTIONS on window
+        // @mediapipe/camera_utils exposes Camera on window
+        // @mediapipe/drawing_utils exposes drawConnectors, drawLandmarks on window
+        // These are automatically set by the UMD bundles above — no extra setup needed.
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

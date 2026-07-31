@@ -1,57 +1,60 @@
-# SpiderGlass AI
+# SpidyGlass AI
 
-SpiderGlass is a production-ready, AI-powered assistive smart-glass platform built for people with speech and hearing impairments. 
-It seamlessly fuses real-time gesture recognition (ISL/ASL), continuous STT audio processing, real-time multi-language translation, and contextual LLM understanding into a premium Heads-Up Display (HUD) experience.
+SpidyGlass AI is a full-stack, AI-powered assistive communication platform that uses real-time computer vision and speech recognition to translate gestures and voice into actionable text and audio using PyTorch, MediaPipe, and Sarvam AI.
 
 ## Architecture
-The system consists of:
-1. **Frontend (Vite + React + Tailwind + Framer Motion)**: A hardware-agnostic HUD interface designed to feel like a premium wearable display (Jarvis/Vision Pro style). It features a subtle particle mesh background, real-time telemetry, and scrolling conversation logs.
-2. **Backend (FastAPI + SQLAlchemy + Asyncio)**: A Python service that orchestrates a Multi-Agent architecture. It handles:
-   - Temporal Gesture Buffering (Signs → Sentences)
-   - Continuous Audio STT Buffering
-   - AI Processing Pipeline (Vision Agent, Gesture Agent, Speech Agent, Translation Agent, Conversation Agent, TTS Agent, Memory Agent).
-3. **Database (SQLite/Postgres)**: Enterprise audit logging for all interactions via Alembic migrations.
-4. **Hardware Abstraction Layer**: `LaptopCameraProvider` and `LaptopAudioProvider` simulate the smart-glass peripherals via WebSocket, allowing easy transition to embedded Android/Linux builds in the future.
 
-## Prerequisites
-- Docker & Docker Compose
-- Or: Python 3.11+, Node.js 20+
+- **Frontend**: React 19, Vite, Tailwind CSS, Zustand, MediaPipe Hands (Client-side tracking)
+- **Backend**: FastAPI, PostgreSQL / SQLite (Demo Mode Fallback), Redis, PyTorch, Sarvam AI Integrations
+- **Agent Mesh**: Distributed node architecture for Speech, Vision, Translation, and LLM Orchestration.
 
-## Getting Started (Docker)
-The easiest way to launch SpiderGlass is via Docker:
+## Windows 11 Setup Guide
 
-```bash
-# Set your AI API keys
-export SARVAM_API_KEY=your_key_here
+The project is fully configured for automated setup on Windows 11. 
 
-# Build and start the platform
-docker compose up --build
+### Prerequisites
+
+1. **Python 3.12+**: Download from [python.org](https://www.python.org/downloads/windows/).
+   - **CRITICAL**: During installation, you MUST check the box that says **"Add Python 3.x to PATH"** at the bottom of the installer window.
+2. **Node.js (v18+)**: Required for the frontend application.
+3. **Docker Desktop (Optional)**: Can be used to automatically start PostgreSQL and Redis. If you don't use Docker, the application will elegantly fall back to SQLite for local development.
+4. **Environment Variables**: The `setup` script will automatically create a `.env` file if one is missing in the `backend/` directory.
+
+### Automated Installation
+
+You can use either the PowerShell script or the Batch script. They perform identical tasks: checking Python, creating a virtual environment, upgrading pip, installing all dependencies, running database migrations, checking system health, and starting the backend `app.main:app` server.
+
+**Using PowerShell (Recommended)**
+```powershell
+.\setup.ps1
 ```
-Navigate to `http://localhost` to view the HUD interface.
+*(Note: If you get an Execution Policy error, run `Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process` first).*
 
-## Getting Started (Local Development)
-
-### 1. Backend
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\Activate
-pip install -r requirements.txt
-
-# Run migrations to setup local SQLite
-alembic upgrade head
-
-# Start API
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+**Using Command Prompt (CMD)**
+```cmd
+setup.bat
 ```
 
-### 2. Frontend
-```bash
+### Verification
+
+The scripts will automatically run `verify_environment.py`, which performs health checks on:
+- Python, pip, Node, & Git
+- Database connection (PostgreSQL/SQLite)
+- Redis connection
+- Sarvam API keys
+- PyTorch Model availability
+
+### Running the Frontend
+
+Once the backend is running, open a new terminal for the frontend:
+
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
-## Testing
-- **Backend**: Run `pytest` inside the `/backend` directory.
-- **Frontend**: Run `npm run test` inside the `/frontend` directory.
+### Troubleshooting
+
+- **`MODEL_NOT_FOUND`**: If you see this in the Vision dashboard, it means you need to place your PyTorch model at `backend/models/sign_language.pt`. The backend will gracefully degrade without crashing.
+- **`SERVICE_NOT_CONFIGURED`**: If you see this in the Speech, Assistant or Translation dashboard, your `SARVAM_API_KEY` is missing from the `backend/.env` file. Demo Mode Fallbacks will be active.

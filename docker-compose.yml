@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: spiderglass
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: spiderglass_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   backend:
     build: ./backend
     ports:
@@ -8,8 +26,11 @@ services:
     environment:
       - ENVIRONMENT=production
       - SARVAM_API_KEY=${SARVAM_API_KEY}
-    volumes:
-      - ./backend/spiderglass_dev.db:/app/spiderglass_dev.db
+      - DATABASE_URL=postgresql://spiderglass:password@db:5432/spiderglass_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
     restart: unless-stopped
 
   frontend:
@@ -19,3 +40,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:

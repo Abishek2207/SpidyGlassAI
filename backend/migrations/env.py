@@ -1,52 +1,75 @@
 """
 SpiderGlass AI – Alembic migration environment.
-Enables async PostgreSQL migrations.
+Supports both offline (SQL dump) and online (live DB) modes.
+Uses synchronous psycopg2 engine for Alembic compatibility.
 """
-import asyncio
+import os
 from logging.config import fileConfig
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-# Import all models so Alembic can detect them
-from app.core.database import Base
-from app.modules.auth.models import User
-from app.modules.settings.models import UserSettings
-from app.modules.analytics.models import AnalyticsEvent
-from app.modules.logs.models import ConversationHistory, GestureLog, SpeechLog, TranslationLog, SystemLog
+# ── Import ALL models so Alembic can detect schema ───────────────────────────
+from app.core.database import Base  # noqa: F401 – registers Base
+from app.modules.auth.models import User  # noqa: F401
+from app.modules.settings.models import UserSettings  # noqa: F401
+from app.modules.analytics.models import AnalyticsEvent  # noqa: F401
+from app.modules.logs.models import (  # noqa: F401
+    ConversationHistory, GestureLog, SpeechLog, TranslationLog, SystemLog
+)
 
-from app.core.config import settings
+# ── Build a SYNCHRONOUS URL for Alembic (it doesn't support asyncpg) ─────────
+def _get_sync_url() -> str:
+    raw = os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://spiderglass:spiderglasspassword@localhost:5432/spiderglass_db"
+    )
+    # Replace async driver with sync psycopg2
+    sync = raw.replace("postgresql+asyncpg", "postgresql+psycopg2")
+    # Fall back to SQLite sync if still pointing to localhost without a real PG setup
+    if "localhost" in sync or "127.0.0.1" in sync:
+        try:
+            import psycopg2  # noqa: F401
+        except ImportError:
+            sync = "sqlite:///./spiderglass_dev.db"
+    return sync
+
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+config.set_main_option("sqlalchemy.url", _get_sync_url())
 target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
+    """Run migrations without a live DB connection (generates SQL)."""
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
     with context.begin_transaction():
         context.run_migrations()
 
 
-async def run_async_migrations() -> None:
-    engine = create_async_engine(settings.database_url)
-    async with engine.connect() as connection:
-        await connection.run_sync(
-            lambda sync_conn: context.configure(
-                connection=sync_conn, target_metadata=target_metadata
-            )
-        )
-        async with connection.begin():
-            await connection.run_sync(lambda _: context.run_migrations())
-    await engine.dispose()
-
-
 def run_migrations_online() -> None:
-    asyncio.run(run_async_migrations())
+    """Run migrations against a live database."""
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+        )
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 if context.is_offline_mode():
