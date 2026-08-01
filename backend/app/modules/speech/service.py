@@ -21,13 +21,8 @@ class SpeechService:
         start = time.time()
 
         if not settings.sarvam_api_key or settings.sarvam_api_key == "your-sarvam-api-key-here":
-            logger.info("Demo Mode: Returning mocked STT response.")
-            return SpeechTranscribeResponse(
-                transcript="[DEMO PROVIDER] How can I assist you with the investor presentation today?",
-                language_code=req.language_code,
-                confidence=0.99,
-                processing_time_ms=int((time.time() - start) * 1000),
-            )
+            logger.error("Sarvam API key is missing. Refusing to run in demo mode.")
+            raise SarvamAPIException("SARVAM_API_KEY is not configured.")
 
         try:
             audio_bytes = base64.b64decode(req.audio_base64)

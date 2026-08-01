@@ -17,11 +17,8 @@ class TTSService:
         start = time.time()
 
         if not settings.sarvam_api_key or settings.sarvam_api_key == "your-sarvam-api-key-here":
-            logger.info("Demo Mode: Returning mocked TTS empty audio array.")
-            return TTSResponse(
-                audios=["" for _ in req.inputs],
-                processing_time_ms=int((time.time() - start) * 1000),
-            )
+            logger.error("Sarvam API key is missing. Refusing to run in demo mode.")
+            raise SarvamAPIException("SARVAM_API_KEY is not configured.")
 
         payload = {
             "inputs": req.inputs,
