@@ -17,11 +17,13 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } }
 });
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 // Root-level axios for /health (not prefixed)
-export const rootApi = axios.create({ baseURL: 'http://localhost:8000' });
+export const rootApi = axios.create({ baseURL: BASE_URL });
 
 // API client for /api/v1/* routes
-export const api = axios.create({ baseURL: 'http://localhost:8000/api/v1' });
+export const api = axios.create({ baseURL: `${BASE_URL}/api/v1` });
 
 export interface AgentResponse {
   response?: string;

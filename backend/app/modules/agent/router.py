@@ -1,19 +1,32 @@
 from fastapi import APIRouter, Depends
 from app.core.security import get_current_user_id
-from app.modules.agent.schema import AgentInput, AgentOutput
-from app.modules.agent.service import AgentService
+from app.agents.graph import app_graph
+from app.agents.state import AgentState
+from pydantic import BaseModel
 
-router = APIRouter(prefix="/agent", tags=["Agent Orchestrator"])
-_service = AgentService()
+router = APIRouter(prefix="/langgraph", tags=["LangGraph Multi-Agent"])
 
+class LangGraphRequest(BaseModel):
+    user_input: str
+    session_id: str
 
-@router.post("/run", response_model=AgentOutput)
-async def run_agent_pipeline(
-    inp: AgentInput,
-    _: int = Depends(get_current_user_id),
+@router.post("/invoke")
+async def invoke_graph(
+    req: LangGraphRequest,
+    user_id: int = Depends(get_current_user_id)
 ):
-    """
-    Run the full AI pipeline: STT → Translation → LLM → TTS.
-    Accepts text, audio, or image as input.
-    """
-    return await _service.run_pipeline(inp)
+    initial_state = {
+        "session_id": req.session_id,
+        "user_id": user_id,
+        "user_input": req.user_input,
+        "current_intent": "coordinator", # Trigger the coordinator first
+        "conversation_history": [],
+        "agent_scratchpad": [],
+        "retrieved_documents": [],
+        "final_response": "",
+        "offline_mode": False,
+        "errors": []
+    }
+    
+    result = await app_graph.ainvoke(initial_state)
+    return {"status": "success", "state": result}

@@ -13,6 +13,8 @@ from app.modules.gesture.router import router as gesture_router
 from app.modules.agent.router import router as agent_router
 from app.modules.settings.router import router as settings_router
 from app.modules.analytics.router import router as analytics_router
+from app.modules.rag.router import router as rag_router
+from app.modules.system.router import router as system_router
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -26,3 +28,5 @@ api_router.include_router(gesture_router)
 api_router.include_router(agent_router)
 api_router.include_router(settings_router)
 api_router.include_router(analytics_router)
+api_router.include_router(rag_router)
+api_router.include_router(system_router)

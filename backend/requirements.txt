@@ -46,3 +46,14 @@ psutil==5.9.8
 # ── Utilities ─────────────────────────────────────────────────────────────────────
 python-dotenv==1.0.1
 colorama==0.4.6
+
+# ── Agents & Local AI ─────────────────────────────────────────────────────────
+langchain
+langgraph
+langchain-community
+langchain-huggingface
+chromadb
+ollama
+openai-whisper
+transformers
+sentence-transformers

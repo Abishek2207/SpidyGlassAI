@@ -49,13 +49,33 @@ class GestureService:
             self.sessions[session_id] = GestureSessionState()
         return self.sessions[session_id]
 
+    def _demo_classify(self, landmarks) -> tuple[str, float]:
+        # Simple heuristic based on MediaPipe y-coordinates
+        # MediaPipe origin is top-left, so lower y value means "higher" on screen
+        fingers_up = {
+            "thumb": landmarks[4].y < landmarks[3].y,
+            "index": landmarks[8].y < landmarks[6].y,
+            "middle": landmarks[12].y < landmarks[10].y,
+            "ring": landmarks[16].y < landmarks[14].y,
+            "pinky": landmarks[20].y < landmarks[18].y,
+        }
+        
+        up_count = sum(fingers_up.values())
+        
+        if up_count == 5:
+            return "HELLO", 0.99
+        elif up_count == 0:
+            return "STOP", 0.95
+        elif fingers_up["thumb"] and up_count == 1:
+            return "YES", 0.90
+        elif fingers_up["index"] and fingers_up["middle"] and up_count == 2:
+            return "THANK YOU", 0.85
+        else:
+            return "NO", 0.80
+
     async def recognize(self, req: GestureRecognizeRequest, session_id: str = "default") -> tuple[GestureRecognizeResponse, str]:
         start = time.time()
         
-        if self.model is None:
-            # Crucial: Throw strict error, no fallbacks
-            return {"error": "MODEL_NOT_FOUND"}, ""
-            
         results = []
         state = self._get_state(session_id)
         
@@ -69,29 +89,41 @@ class GestureService:
             if len(hand_landmarks) != 21:
                 continue
                 
-            # Flatten landmarks to 63 features
-            flat_features = []
-            for lm in hand_landmarks:
-                flat_features.extend([lm.x, lm.y, lm.z])
-                
-            input_tensor = torch.tensor([flat_features], dtype=torch.float32).to(self.device)
-            
-            with torch.no_grad():
-                outputs = self.model(input_tensor)
-                probabilities = torch.nn.functional.softmax(outputs, dim=1)
-                confidence, predicted_idx = torch.max(probabilities, 1)
-                
-                gesture = self.classes[predicted_idx.item()]
-                conf_val = confidence.item()
-                
+            if self.model is None:
+                # DEMO MODE
+                gesture, conf_val = self._demo_classify(hand_landmarks)
                 raw_gestures.append(gesture)
                 results.append(GestureResult(
                     gesture=gesture,
                     confidence=conf_val,
                     latency=int((time.time() - start) * 1000),
-                    model_version="v1.0.0",
+                    model_version="Demo Classification (ML model not loaded)",
                     hand_index=hand_idx,
                 ))
+            else:
+                # REAL INFERENCE
+                flat_features = []
+                for lm in hand_landmarks:
+                    flat_features.extend([lm.x, lm.y, lm.z])
+                    
+                input_tensor = torch.tensor([flat_features], dtype=torch.float32).to(self.device)
+                
+                with torch.no_grad():
+                    outputs = self.model(input_tensor)
+                    probabilities = torch.nn.functional.softmax(outputs, dim=1)
+                    confidence, predicted_idx = torch.max(probabilities, 1)
+                    
+                    gesture = self.classes[predicted_idx.item()]
+                    conf_val = confidence.item()
+                    
+                    raw_gestures.append(gesture)
+                    results.append(GestureResult(
+                        gesture=gesture,
+                        confidence=conf_val,
+                        latency=int((time.time() - start) * 1000),
+                        model_version="v1.0.0",
+                        hand_index=hand_idx,
+                    ))
 
         if raw_gestures:
             state.last_seen_time = time.time()

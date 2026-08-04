@@ -143,8 +143,8 @@ async def health_check():
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
         db_status = "connected"
-    except Exception:
-        db_status = "disconnected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
         
     # GPU / Memory
     gpu_status = "cuda:0" if torch.cuda.is_available() else "CPU"

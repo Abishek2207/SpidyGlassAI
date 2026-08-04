@@ -20,6 +20,9 @@ async def get_redis() -> Redis:
             encoding="utf-8",
             decode_responses=True,
             max_connections=50,
+            health_check_interval=10,
+            retry_on_timeout=True,
+            socket_keepalive=True,
         )
         logger.info("Redis connection pool created.")
     return _redis_pool
