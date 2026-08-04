@@ -9,7 +9,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const Dashboard: React.FC = () => {
   const { latency, fps, latencyHistory } = useStore();
 
-  const { data: healthData, isLoading } = useQuery({
+  const { data: healthData } = useQuery({
     queryKey: ['health'],
     queryFn: async () => {
       const res = await rootApi.get('/health');
@@ -18,7 +18,7 @@ const Dashboard: React.FC = () => {
     refetchInterval: 5000,
   });
 
-  const { data: wsStatsData } = useQuery({
+  useQuery({
     queryKey: ['ws-stats'],
     queryFn: async () => {
       const res = await api.get('/ws/stats');
@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
   // Rolling telemetry for the chart from real latency history
   const chartData = React.useMemo(() => {
     return latencyHistory.map((lat, i) => ({
-      time: \T-\\,
+      time: `T-${20 - i}`,
       load: lat,
     }));
   }, [latencyHistory]);
@@ -59,6 +59,7 @@ const Dashboard: React.FC = () => {
     { label: 'Sarvam AI', value: healthData?.sarvam || 'missing', icon: Cpu, color: healthData?.sarvam === 'connected' ? 'text-blue-400' : 'text-yellow-400' },
     { label: 'Database Status', value: healthData?.database || 'disconnected', icon: Database, color: healthData?.database === 'connected' ? 'text-green-400' : 'text-red-400' },
     { label: 'Ollama Status', value: ollamaData?.status || 'unknown', icon: Server, color: ollamaData?.status === 'online' ? 'text-green-400' : 'text-red-400' },
+    { label: 'WS Latency', value: `${latency}ms`, icon: Wifi, color: 'text-purple-400' },
     { label: 'Vision FPS', value: String(fps), icon: Eye, color: 'text-pink-400' },
   ];
 
@@ -77,7 +78,7 @@ const Dashboard: React.FC = () => {
           >
             <div className="flex justify-between items-start mb-4">
               <span className="text-gray-400 text-sm font-medium">{stat.label}</span>
-              <stat.icon className={\w-5 h-5 \\} />
+              <stat.icon className={`w-5 h-5 ${stat.color}`} />
             </div>
             <div className="flex items-end space-x-2">
               <span className="text-2xl font-bold text-white tracking-tight">
