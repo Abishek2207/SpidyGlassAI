@@ -56,6 +56,8 @@ langchain-community==0.2.12
 langchain-huggingface==0.0.3
 chromadb==0.5.5
 ollama==0.3.1
-openai-whisper==20231117
+faster-whisper==1.0.3
+ctranslate2==4.4.0
+av==12.3.0
 transformers==4.44.0
 sentence-transformers==3.0.1
