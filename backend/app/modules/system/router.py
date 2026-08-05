@@ -49,7 +49,8 @@ async def get_system_status(db: AsyncSession = Depends(get_db)):
         "device": "GPU" if torch.cuda.is_available() else "CPU",
         "latency": f"{latency_ms}ms",
         "cpu": psutil.cpu_percent(),
-        "ram": psutil.virtual_memory().percent
+        "ram": psutil.virtual_memory().percent,
+        "mode": "offline" if settings.offline_mode else "online"
     }
 
 @router.get("/ollama")
